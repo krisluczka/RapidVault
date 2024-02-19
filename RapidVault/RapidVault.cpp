@@ -22,4 +22,6 @@ int main() {
 	t->change_row( 1, "age", 0 );
 
 	t->display();
+
+	db.rvquery( "MERGE test test3; PICK token1 token2;" );
 }

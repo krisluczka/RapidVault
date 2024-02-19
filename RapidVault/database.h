@@ -9,6 +9,7 @@
 #include <string>
 #include <sstream>
 #include <iomanip>
+#include <stack>
 #define NULL64_INDEX 18446744073709551615
 
 namespace rv {
@@ -73,6 +74,14 @@ namespace rv {
 				Returns an index to given table with certain name
 			*/
 			uint_fast64_t get_table_index( std::string ) const;
+
+			/*
+				###############################
+					RVquery execution
+				###############################
+			*/
+			void rvquery( std::string );
+
 		private:
 			/*
 				Database name
@@ -88,5 +97,23 @@ namespace rv {
 				Tables' relations
 			*/
 			std::vector<relation*> relations;
+
+			/*
+				###############################
+					RVquery functions
+				###############################
+			*/
+			/*
+				Evaluates mathematical/logical expressions for WHERE directive
+				Returns boolean type variable
+			*/
+			bool expression_rpn( std::string );
+
+			/*
+				The heart of RVquery
+
+				Function evaluates the query based on the tokens
+			*/
+			void go_go_gadget_query( std::vector<std::string*>& );
 	};
 }
