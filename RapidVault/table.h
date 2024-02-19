@@ -96,12 +96,12 @@ namespace rv {
 				Returns number of rows
 			*/
 			uint_fast64_t display_raw() const;
-		private:
+
+		private:			
 			/*
 				Table name
 			*/
 			std::string name;
-			
 			/*
 				Data stored in the table
 			*/

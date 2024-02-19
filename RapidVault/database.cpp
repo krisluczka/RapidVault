@@ -120,6 +120,13 @@ namespace rv {
 		return relations.size();
 	}
 
+	table* database::create_table( std::string name ) {
+		table* t = new table;
+		t->name = name;
+		tables.push_back( t );
+		return t;
+	}
+
 	table* database::get_table_pointer( std::variant<uint_fast64_t, std::string> identifier ) const {
 		// checking the table identifier
 		std::visit( [this]( auto arg ) {

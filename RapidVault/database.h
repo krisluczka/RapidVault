@@ -56,10 +56,16 @@ namespace rv {
 					Tables manipulating
 				###############################
 			*/
-			uint_fast64_t add_table();
-			uint_fast64_t remove_table();
 			/*
-				Returns an pointer to given table
+				Creates a table
+				Returns its pointer
+			*/
+			table* create_table( std::string );
+			uint_fast64_t rename_table();
+			uint_fast64_t remove_table();
+
+			/*
+				Returns a pointer to given table
 			*/
 			table* get_table_pointer( std::variant<uint_fast64_t, std::string> ) const;
 
