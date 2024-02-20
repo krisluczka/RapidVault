@@ -172,7 +172,7 @@ namespace rv {
 		return index;
 	}
 
-	uint_fast16_t table::get_column_index( std::string name ) {
+	uint_fast16_t table::get_column_index( std::string name ) const {
 		uint_fast16_t index = NULL16_INDEX;
 		for ( uint_fast16_t i = 0; i < data.size(); i++ ) {
 			if ( std::get<0>( data[i] ) == name ) {
@@ -222,92 +222,96 @@ namespace rv {
 	}
 
 	uint_fast64_t table::display() const {
-		// checking the amount of rows (based on first column)
-		column_data* cd = std::get<1>( data[0] );
-		uint_fast64_t rows = cd->size();
+		uint_fast64_t rows = 0;
+		if ( data.size() > 0 ) {
+			// checking the amount of rows (based on first column)
+			column_data* cd = std::get<1>( data[0] );
+			rows = cd->size();
 
-		// searching for the longest string in every column and it's name
-		std::vector<uint_fast64_t> column_width( data.size(), 0 );
-		std::stringstream parser;
-		std::string string_parser = "";
+			// searching for the longest string in every column and it's name
+			std::vector<uint_fast64_t> column_width( data.size(), 0 );
+			std::stringstream parser;
+			std::string string_parser = "";
 
-		for ( uint_fast16_t column_index = 0; column_index < data.size(); column_index++ ) {
-			// checking whether the column's name is the longest
-			string_parser = std::get<0>( data[column_index] );
-			column_width[column_index] = std::max( column_width[column_index], string_parser.length() );
-			
-			for ( uint_fast64_t row = 0; row < rows; row++ ) {
-				// pointer to current column data
-				cd = std::get<1>( data[column_index] );
-
-				// using stringstream because we need to check for its length in characters
-				std::visit( [&parser, &string_parser, &column_width, &column_index]( auto arg ) {
-					parser << arg;
-					string_parser = parser.str();
-					column_width[column_index] = std::max( column_width[column_index], string_parser.length() );
-					parser.str( "" );
-				}, *cd->at( row ) );
-			}
-		}
-
-		// drawing the column's names
-		std::cout << 'o';
-		for ( uint_fast64_t cw = 0; cw < column_width.size(); cw++ ) {
-			std::cout << std::string( column_width[cw] + 2, '-' ) << 'o';
-		}
-		std::cout << "\n|";
-		for ( uint_fast16_t column_index = 0; column_index < data.size(); column_index++ ) {
-			string_parser = std::get<0>( data[column_index] );
-			std::cout << " " << std::left << std::setw( column_width[column_index] ) << string_parser << " |";
-		}
-		std::cout << "\n";
-
-		// drawing the table values
-		std::cout << '+';
-		for ( uint_fast64_t cw = 0; cw < column_width.size(); cw++ ) {
-			std::cout << std::string( column_width[cw] + 2, '-' ) << '+';
-		}
-		std::cout << "\n";
-		for ( uint_fast64_t row = 0; row < rows; row++ ) {
-			std::cout << "|";
 			for ( uint_fast16_t column_index = 0; column_index < data.size(); column_index++ ) {
-				// pointer to current column data
-				cd = std::get<1>( data[column_index] );
+				// checking whether the column's name is the longest
+				string_parser = std::get<0>( data[column_index] );
+				column_width[column_index] = std::max( column_width[column_index], string_parser.length() );
+			
+				for ( uint_fast64_t row = 0; row < rows; row++ ) {
+					// pointer to current column data
+					cd = std::get<1>( data[column_index] );
 
-				// displaying data
-				std::visit( [&column_index, &column_width]( auto arg ) {
-					std::cout << " " << std::left << std::setw(column_width[column_index]) << arg << " |";
-				}, *cd->at( row ) );
+					// using stringstream because we need to check for its length in characters
+					std::visit( [&parser, &string_parser, &column_width, &column_index]( auto arg ) {
+						parser << arg;
+						string_parser = parser.str();
+						column_width[column_index] = std::max( column_width[column_index], string_parser.length() );
+						parser.str( "" );
+					}, *cd->at( row ) );
+				}
 			}
-			std::cout << "\n+";
+
+			// drawing the column's names
+			std::cout << 'o';
+			for ( uint_fast64_t cw = 0; cw < column_width.size(); cw++ ) {
+				std::cout << std::string( column_width[cw] + 2, '-' ) << 'o';
+			}
+			std::cout << "\n|";
+			for ( uint_fast16_t column_index = 0; column_index < data.size(); column_index++ ) {
+				string_parser = std::get<0>( data[column_index] );
+				std::cout << " " << std::left << std::setw( column_width[column_index] ) << string_parser << " |";
+			}
+			std::cout << "\n";
+
+			// drawing the table values
+			std::cout << '+';
 			for ( uint_fast64_t cw = 0; cw < column_width.size(); cw++ ) {
 				std::cout << std::string( column_width[cw] + 2, '-' ) << '+';
 			}
 			std::cout << "\n";
-		}
+			for ( uint_fast64_t row = 0; row < rows; row++ ) {
+				std::cout << "|";
+				for ( uint_fast16_t column_index = 0; column_index < data.size(); column_index++ ) {
+					// pointer to current column data
+					cd = std::get<1>( data[column_index] );
 
+					// displaying data
+					std::visit( [&column_index, &column_width]( auto arg ) {
+						std::cout << " " << std::left << std::setw(column_width[column_index]) << arg << " |";
+					}, *cd->at( row ) );
+				}
+				std::cout << "\n+";
+				for ( uint_fast64_t cw = 0; cw < column_width.size(); cw++ ) {
+					std::cout << std::string( column_width[cw] + 2, '-' ) << '+';
+				}
+				std::cout << "\n";
+			}
+		}
 		return rows;
 	}
 
 	uint_fast64_t table::display_raw() const {
-		// checking the amount of rows (based on first column)
-		column_data* cd = std::get<1>( data[0] );
-		uint_fast64_t rows = cd->size();
+		uint_fast64_t rows = 0;
+		if ( data.size() > 0 ) {
+			// checking the amount of rows (based on first column)
+			column_data* cd = std::get<1>( data[0] );
+			rows = cd->size();
 
-		for ( uint_fast64_t row = 0; row < rows; row++ ) {
-			for ( uint_fast16_t column_index = 0; column_index < data.size(); column_index++ ) {
-				// pointer to current column data
-				cd = std::get<1>( data[column_index] );
+			for ( uint_fast64_t row = 0; row < rows; row++ ) {
+				for ( uint_fast16_t column_index = 0; column_index < data.size(); column_index++ ) {
+					// pointer to current column data
+					cd = std::get<1>( data[column_index] );
 
-				// displaying data
-				std::visit( [this, &column_index]( auto arg ) {
-					if ( column_index == data.size() - 1 ) std::cout << arg << ";";
-					else std::cout << arg << ",";
-				}, *cd->at( row ) );
+					// displaying data
+					std::visit( [this, &column_index]( auto arg ) {
+						if ( column_index == data.size() - 1 ) std::cout << arg << ";";
+						else std::cout << arg << ",";
+					}, *cd->at( row ) );
+				}
+				std::cout << std::endl;
 			}
-			std::cout << std::endl;
 		}
-
 		return rows;
 	}
 }

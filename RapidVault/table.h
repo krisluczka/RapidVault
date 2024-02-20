@@ -58,7 +58,7 @@ namespace rv {
 			/*
 				Returns column's index
 			*/
-			uint_fast16_t get_column_index( std::string );
+			uint_fast16_t get_column_index( std::string ) const;
 
 
 			/*

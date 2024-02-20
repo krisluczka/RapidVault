@@ -13,13 +13,20 @@
 #define NULL64_INDEX 18446744073709551615
 
 namespace rv {
-	/*
-		Relation types
-			0 - none
-			1 - 1:1
-			2 - N:1
-			3 - N:M *
-	*/
+	///*
+	//	Relation types
+	//		0 - none
+	//		1 - 1:1
+	//		2 - N:1
+	//		3 - N:M *
+	//*/
+	//enum {
+	//	RELATION_NONE,
+	//	RELATION_1_1,
+	//	RELATION_N_1,
+	//	RELATION_N_M
+	//};
+
 	struct relation {
 		relation( uint_fast64_t a, uint_fast64_t b, uint_fast8_t t ) : A( a ), B( b ), type( t ) {}
 		relation() : A( NULL64_INDEX ), B( NULL64_INDEX ), type(0) {}
@@ -35,22 +42,22 @@ namespace rv {
 
 
 
-			/*
-				###############################
-					Relations manipulating
-				###############################
-			*/
-			/*
-				Adds a new relation between two distinct tables
-				Returns its index
-			*/
-			uint_fast64_t add_relation( std::variant<uint_fast64_t, std::string>, std::variant<uint_fast64_t, std::string>, uint_fast8_t );
-			/*
-				Removes a relation
-				Returns new amount of relations
-			*/
-			uint_fast64_t remove_relation( uint_fast64_t );
-			uint_fast64_t remove_relation( std::variant<uint_fast64_t, std::string>, std::variant<uint_fast64_t, std::string> );
+			///*
+			//	###############################
+			//		Relations manipulating
+			//	###############################
+			//*/
+			///*
+			//	Adds a new relation between two distinct tables
+			//	Returns its index
+			//*/
+			//uint_fast64_t add_relation( std::variant<uint_fast64_t, std::string>, std::variant<uint_fast64_t, std::string>, uint_fast8_t );
+			///*
+			//	Removes a relation
+			//	Returns new amount of relations
+			//*/
+			//uint_fast64_t remove_relation( uint_fast64_t );
+			//uint_fast64_t remove_relation( std::variant<uint_fast64_t, std::string>, std::variant<uint_fast64_t, std::string> );
 
 			/*
 				###############################
