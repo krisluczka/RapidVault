@@ -11,8 +11,8 @@
 	For example:
 		"command arg arg; command; command arg;"
 
-	For each query, an environment is created in which the result
-	is stored. So when the query looks like this:
+	For each query, an environment (operation table) is created in which
+    the result is stored. So when the query looks like this:
 		"MERGE table1 table2;"
 	It spits out both tables joined together
 	according to the relation rules. Adding additional commands in
@@ -30,23 +30,32 @@
 
 	>	Operating queries	<
 
-		MERGE <arg1> <arg2>, ... - selects given tables and joins them
-			MERGE table1, table2, table3;
+        SELECT <table> - selects the table as the primary operational table
+            SELECT main;
 
-		PICK <arg1> <arg2> ... - selects given columns, discarding others
+		MERGE <table> <col1> <col2> ... - selects given tables and joins them to the operational table
+			MERGE table1 table1.column1 main.column1;
+
+		PICK <col1> <col2> ... - selects given columns, discarding others
 		from the final result
-			PICK table1.column1, table2.column6;
+			PICK table1.column1, main.column6;
 
 		WHERE <expression> - selects only these rows, where the expression is true
-		! WARNING ! Expressions use Reverse Polish Notation (more details at the end)
+		! WARNING ! Expressions use Reverse Polish Notation
 			WHERE column2 column1 > column3 column1 > &&;
 
 		UPDATE <column> <value> - changes every value in the given column
 			UPDATE users.age 18;
 
+
+
 	>	Manipulating queries	<
 
 		INSERT
+
+
+
+    >   WHERE expressions   <
 */
 #include "database.h"
 #define isOperator(token) (token == "+" || token == "-" || token == "*" || token == "/" || token == "^" || token == "&&" || token == "||" || token == "<" || token == "<=" || token == ">" || token == ">=" || token == "==" || token == "!=" )
@@ -120,6 +129,10 @@ namespace rv {
     }
 
 	void database::rvquery( std::string query ) {
+        // reseting the query table
+        delete operation_table;
+        operation_table = new table;
+
         // dividing the query into lines ending with a semicolon
         std::vector<std::string*> lines;
         std::istringstream q(query);
@@ -154,7 +167,10 @@ namespace rv {
 	}
 
     void database::go_go_gadget_query( std::vector<std::string*>& tokens ) {
-        if ( *tokens[0] == "MERGE" ) {
+        // copying
+        if ( *tokens[0] == "SELECT" ) {
+
+        } else if ( *tokens[0] == "MERGE" ) {
             
         } else if ( *tokens[0] == "PICK" ) {
 

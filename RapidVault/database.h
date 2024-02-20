@@ -18,7 +18,7 @@ namespace rv {
 			0 - none
 			1 - 1:1
 			2 - N:1
-			3 - N:M
+			3 - N:M *
 	*/
 	struct relation {
 		relation( uint_fast64_t a, uint_fast64_t b, uint_fast8_t t ) : A( a ), B( b ), type( t ) {}
@@ -50,7 +50,7 @@ namespace rv {
 				Returns new amount of relations
 			*/
 			uint_fast64_t remove_relation( uint_fast64_t );
-			uint_fast64_t remove_relation( std::variant<uint_fast64_t, std::string>, std::variant<uint_fast64_t, std::string>, uint_fast8_t );
+			uint_fast64_t remove_relation( std::variant<uint_fast64_t, std::string>, std::variant<uint_fast64_t, std::string> );
 
 			/*
 				###############################
@@ -100,9 +100,14 @@ namespace rv {
 
 			/*
 				###############################
-					RVquery functions
+					RVquery
 				###############################
 			*/
+			/*
+				Operation table (where all the queries are evaluated)
+			*/
+			table* operation_table;
+
 			/*
 				Evaluates mathematical/logical expressions for WHERE directive
 				Returns boolean type variable

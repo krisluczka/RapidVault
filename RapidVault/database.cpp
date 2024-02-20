@@ -3,10 +3,12 @@
 namespace rv {
 	database::database( std::string database_name ) {
 		name = database_name;
+		operation_table = nullptr;
 	}
 
 	database::database() {
 		name = "rapidvault_database";
+		operation_table = nullptr;
 	}
 
 	database::~database() {
@@ -72,7 +74,7 @@ namespace rv {
 		return relations.size();
 	}
 
-	uint_fast64_t database::remove_relation( std::variant<uint_fast64_t, std::string> A, std::variant<uint_fast64_t, std::string> B, uint_fast8_t type ) {
+	uint_fast64_t database::remove_relation( std::variant<uint_fast64_t, std::string> A, std::variant<uint_fast64_t, std::string> B ) {
 		uint_fast64_t index_A = NULL64_INDEX;
 		uint_fast64_t index_B = NULL64_INDEX;
 
@@ -106,11 +108,11 @@ namespace rv {
 			}
 		}, B );
 
-		// searching for a given relation
+		// searching for a given relation and removing it
 		relation* r;
 		for ( uint_fast64_t index = 0; index < relations.size(); index++ ) {
 			r = relations[index];
-			if ( (r->A == index_A) && (r->B == index_B) && (r->type == type) ) {
+			if ( (r->A == index_A) && (r->B == index_B) ) {
 				delete r;
 				relations.erase( relations.begin() + index );
 				break;

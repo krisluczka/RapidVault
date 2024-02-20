@@ -9,6 +9,63 @@ namespace rv {
 		name = "rapidvault_table";
 	}
 
+	table::table( const table& other ) {
+		if ( this != &other ) {
+			this->name = other.name;
+
+			this->data.clear();
+			// deep copy
+			for ( const auto& tuple : other.data ) {
+				// column name copy
+				std::string n = std::get<0>( tuple );
+
+				// pointer for old column_data
+				const column_data* cd_ptr = std::get<1>( tuple );
+
+				// new column_data
+				column_data* cd = new column_data;
+				cd->reserve( cd_ptr->size() );
+
+				// copying the cell_data in column_data
+				for ( cell_data* ptr : *cd_ptr ) {
+					cd->push_back( new cell_data( *ptr ) );
+				}
+
+				// tupling
+				this->data.push_back( std::make_tuple( n, cd ) );
+			}
+		}
+	}
+
+	table& table::operator=( const table& other ) {
+		if ( this != &other ) {
+			this->name = other.name;
+
+			this->data.clear();
+			// deep copy
+			for ( const auto& tuple : other.data ) {
+				// column name copy
+				std::string n = std::get<0>( tuple );
+
+				// pointer for old column_data
+				const column_data* cd_ptr = std::get<1>( tuple );
+				
+				// new column_data
+				column_data* cd = new column_data;
+				cd->reserve( cd_ptr->size() );
+
+				// copying the cell_data in column_data
+				for ( cell_data* ptr : *cd_ptr ) {
+					cd->push_back( new cell_data( *ptr ) );
+				}
+
+				// tupling
+				this->data.push_back( std::make_tuple( n, cd ) );
+			}
+		}
+		return *this;
+	}
+
 	table::~table() {
 		column_data* cd;
 		cell_data* dc;
@@ -23,7 +80,26 @@ namespace rv {
 	}
 
 	uint_fast16_t table::create_column( std::string name, uint_fast16_t index ) {
+		/*
+			We need to check how many empty cells we need to create.
+			Whenever we're creating a new column to a table with
+			existing records, there should be exactly the same amount
+			of cells, as there are records.
+		*/
+		uint_fast64_t rows = 0;
+		if ( data.size() != 0 ) {
+			column_data* cd = std::get<1>( data[0] );
+			rows = cd->size();
+		}
+
 		column_data* column = new column_data;
+		cell_data* cd;
+		// creating the empty cells
+		for ( uint_fast64_t i = 0; i < rows; i++ ) {
+			cd = new cell_data;
+			column->push_back( cd );
+		}
+
 		if ( index == NULL16_INDEX ) {
 			// inserting at the back
 			data.push_back( std::tuple( name, column ) );
@@ -122,21 +198,21 @@ namespace rv {
 
 	void table::change_row( uint_fast64_t index, std::variant<uint_fast16_t, std::string> identifier, cell_data d ) {
 		// checking the amount of rows (based on first column)
-		column_data* cd = std::get<1>( data[0] );
+		column_data* cd = std::get<1>( this->data[0] );
 		uint_fast64_t rows = cd->size();
 		// checking the row identifier (only when the row exists)
 		if ( index < rows )
 		std::visit( [this, &cd, &d, &index]( auto arg ) {
 			if constexpr ( std::is_same_v<std::decay_t<decltype(arg)>, uint_fast16_t> ) {
 				if ( (arg != NULL16_INDEX) && (arg < this->data.size()) ) {
-					cd = std::get<1>( data[arg] );
+					cd = std::get<1>( this->data[arg] );
 					*cd->at( index ) = d;
 				}
 			} else if constexpr ( std::is_same_v<std::decay_t<decltype(arg)>, std::string> ) {
 				const std::string name = arg;
 				for ( uint_fast16_t i = 0; i < this->data.size(); i++ ) {
 					if ( std::get<0>( this->data[i] ) == name ) {
-						cd = std::get<1>( data[i] );
+						cd = std::get<1>( this->data[i] );
 						*cd->at( index ) = d;
 						break;
 					}

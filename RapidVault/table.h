@@ -13,8 +13,6 @@
 namespace rv {
 	// Cell data
 	typedef std::variant<bool, int_fast32_t, int_fast64_t, float, double, std::string> cell_data;
-	// Row data (technically the same, but for different purposes)
-	typedef std::vector<cell_data*> row_data;
 	// Column data
 	typedef std::vector<cell_data*> column_data;
 	// Whole column (column name, column type, pointer to column)
@@ -28,6 +26,8 @@ namespace rv {
 		public:
 			table( std::string );
 			table();
+			table( const table& other );
+			table& operator=( const table& other );
 			~table();
 
 
@@ -41,7 +41,7 @@ namespace rv {
 				Creating a new column of specified type and name
 				Returns its index
 			*/
-			uint_fast16_t create_column( std::string, uint_fast16_t index = 65535 );
+			uint_fast16_t create_column( std::string, uint_fast16_t index = NULL16_INDEX );
 
 			/*
 				Deletes specified column
@@ -102,6 +102,7 @@ namespace rv {
 				Table name
 			*/
 			std::string name;
+
 			/*
 				Data stored in the table
 			*/
