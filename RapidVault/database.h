@@ -10,7 +10,6 @@
 #include <sstream>
 #include <iomanip>
 #include <stack>
-#define NULL64_INDEX 18446744073709551615
 
 namespace rv {
 	///*

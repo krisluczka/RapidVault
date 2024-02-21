@@ -184,46 +184,50 @@ namespace rv {
 	}
 
 	uint_fast64_t table::create_row() {
-		column_data * cd = std::get<1>( data[0] );
+		if ( data.size() ) {
+			column_data* cd = std::get<1>( data[0] );
 
-		// filling row with zeroes
-		for ( uint_fast16_t column_index = 0; column_index < data.size(); column_index++ ) {
-			cd = std::get<1>( data[column_index] );
-			cell_data * d = new cell_data(0);
-			cd->push_back( d );
-		}
+			// filling row with zeroes
+			for ( uint_fast16_t column_index = 0; column_index < data.size(); column_index++ ) {
+				cd = std::get<1>( data[column_index] );
+				cell_data* d = new cell_data( 0 );
+				cd->push_back( d );
+			}
 
-		return cd->size();
+			return cd->size();
+		} else return NULL64_INDEX;
 	}
 
 	void table::change_row( uint_fast64_t index, std::variant<uint_fast16_t, std::string> identifier, cell_data d ) {
-		// checking the amount of rows (based on first column)
-		column_data* cd = std::get<1>( this->data[0] );
-		uint_fast64_t rows = cd->size();
-		// checking the row identifier (only when the row exists)
-		if ( index < rows )
-		std::visit( [this, &cd, &d, &index]( auto arg ) {
-			if constexpr ( std::is_same_v<std::decay_t<decltype(arg)>, uint_fast16_t> ) {
-				if ( (arg != NULL16_INDEX) && (arg < this->data.size()) ) {
-					cd = std::get<1>( this->data[arg] );
-					*cd->at( index ) = d;
-				}
-			} else if constexpr ( std::is_same_v<std::decay_t<decltype(arg)>, std::string> ) {
-				const std::string name = arg;
-				for ( uint_fast16_t i = 0; i < this->data.size(); i++ ) {
-					if ( std::get<0>( this->data[i] ) == name ) {
-						cd = std::get<1>( this->data[i] );
+		if ( data.size() ) {
+			// checking the amount of rows (based on first column)
+			column_data* cd = std::get<1>( this->data[0] );
+			uint_fast64_t rows = cd->size();
+			// checking the row identifier (only when the row exists)
+			if ( index < rows )
+			std::visit( [this, &cd, &d, &index]( auto arg ) {
+				if constexpr ( std::is_same_v<std::decay_t<decltype(arg)>, uint_fast16_t> ) {
+					if ( (arg != NULL16_INDEX) && (arg < this->data.size()) ) {
+						cd = std::get<1>( this->data[arg] );
 						*cd->at( index ) = d;
-						break;
+					}
+				} else if constexpr ( std::is_same_v<std::decay_t<decltype(arg)>, std::string> ) {
+					const std::string name = arg;
+					for ( uint_fast16_t i = 0; i < this->data.size(); i++ ) {
+						if ( std::get<0>( this->data[i] ) == name ) {
+							cd = std::get<1>( this->data[i] );
+							*cd->at( index ) = d;
+							break;
+						}
 					}
 				}
-			}
-		}, identifier );
+			}, identifier );
+		}
 	}
 
 	uint_fast64_t table::display() const {
 		uint_fast64_t rows = 0;
-		if ( data.size() > 0 ) {
+		if ( data.size() ) {
 			// checking the amount of rows (based on first column)
 			column_data* cd = std::get<1>( data[0] );
 			rows = cd->size();

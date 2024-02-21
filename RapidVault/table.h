@@ -8,6 +8,7 @@
 #include <string>
 #include <sstream>
 #include <iomanip>
+#define NULL64_INDEX 18446744073709551615
 #define NULL16_INDEX 65535
 
 namespace rv {

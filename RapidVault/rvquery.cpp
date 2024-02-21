@@ -20,7 +20,9 @@
 	! WARNING !
 	When merging tables, the columns will appear with the name
 		"table_name.column_name"
-	instead of simple "column_name"
+	instead of simple "column_name".
+
+
 
 		<command> - <description>
 			<example of use>
@@ -40,6 +42,9 @@
             - 1N means one-to-many relation
             - N1 means many-to-one relation
             - NN means many-to-many relation
+
+        ALIAS <column> <new_name> - selects given column and renames them
+            ALIAS main.test Testing_column
 
 		PICK <col1> <col2> ... - selects given columns, discarding others
 		from the final result
@@ -193,11 +198,8 @@ namespace rv {
                     std::cerr << "ERR: Not enough arguments!" << std::endl;
                 }
             } else if ( *tokens[0] == "JOIN" ) {
-                /*
-                    DONT USE IT YET !!! NOI DEBUGGED !
-                */
                 if ( tokens.size() > 4 ) {
-                    // if 'SELECT' occured
+                    // checking whether the 'SELECT' occurred
                     if ( operation_table->data.size() ) {
                         // decoding the tokens
                         uint_fast16_t main_column_index = operation_table->get_column_index( *tokens[1] );
@@ -265,6 +267,11 @@ namespace rv {
                     }
                 } else {
                     std::cerr << "ERR: Not enough arguments!" << std::endl;
+                }
+            } else if ( *tokens[0] == "ALIAS" ) {
+                if ( tokens.size() > 2 ) {
+                    // renaming the column
+                    operation_table->rename_column( *tokens[1], *tokens[2] );
                 }
             } else if ( *tokens[0] == "PICK" ) {
 
