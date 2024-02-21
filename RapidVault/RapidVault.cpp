@@ -43,7 +43,5 @@ int main() {
 	t->change_row( 2, "id", 2 );
 	t->change_row( 2, "profession_name", "Spoon bender" );
 
-	//db.rvquery( "SELECT professions; " ); // vector error when there is an empty line (for now everything after semicolon is a line)
-	//db.rvquery( "SELECT professions;" );
-	db.rvquery( "SELECT users; JOIN users.profession N1 id professions" );
+	db.rvquery( "SELECT users; JOIN users.profession N1 id professions;				;;;;;		; " );
 }
