@@ -82,5 +82,5 @@ int main() {
 	t->change_row( 3, "id", 3 );
 	t->change_row( 3, "name", "Krakow" );
 
-	db.rvquery( "SELECT users; JOIN users.profession N1 id professions; JOIN professions.city N1 id cities; ALIAS cities.name cname; JOIN users.main_city N1 id cities;" );
+	db.rvquery( "SELECT users; JOIN users.profession N1 id professions; PICK users.name professions.profession_name" );
 }

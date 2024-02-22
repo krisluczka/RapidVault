@@ -81,6 +81,7 @@ namespace rv {
             if ( isdigit( token[0] ) || (token[0] == '-' && isdigit( token[1] )) ) {
                 values.push( std::stod( token ) );
             }
+
             // checking if we're dealing with any operator
             else if ( isOperator( token ) ) {
                 if ( values.size() < 2 ) {
@@ -272,9 +273,29 @@ namespace rv {
                 if ( tokens.size() > 2 ) {
                     // renaming the column
                     operation_table->rename_column( *tokens[1], *tokens[2] );
+                } else {
+                    std::cerr << "ERR: Not enough arguments!" << std::endl;
                 }
             } else if ( *tokens[0] == "PICK" ) {
+                if ( tokens.size() > 1 ) {
+                    // deleting the "PICK"
+                    tokens.erase( tokens.begin() );
+                    table* ot = new table;
 
+                    // selecting the columns and pushing them to new table
+                    uint_fast16_t index = NULL16_INDEX;
+                    for ( std::string* token : tokens ) {
+                        index = operation_table->get_column_index( *token );
+                        if ( index != NULL16_INDEX ) {
+                            ot->data.push_back( operation_table->data[index] );
+                        }
+                    }
+
+                    // replacing the tables
+                    *operation_table = *ot;
+                } else {
+                    std::cerr << "ERR: Not enough arguments!" << std::endl;
+                }
             } else if ( *tokens[0] == "WHERE" ) {
 
             } else if ( *tokens[0] == "UPDATE" ) {
