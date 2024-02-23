@@ -225,6 +225,36 @@ namespace rv {
 		}
 	}
 
+	cell_data table::get_row( uint_fast64_t index, std::variant<uint_fast16_t, std::string> identifier ) {
+		cell_data d = 0;
+		if ( data.size() ) {
+			// checking the amount of rows (based on first column)
+			column_data* cd = std::get<1>( this->data[0] );
+			uint_fast64_t rows = cd->size();
+			// checking the row identifier (only when the row exists)
+			if ( index < rows )
+				std::visit( [this, &cd, &d, &index]( auto arg ) {
+				if constexpr ( std::is_same_v<std::decay_t<decltype(arg)>, uint_fast16_t> ) {
+					if ( (arg != NULL16_INDEX) && (arg < this->data.size()) ) {
+						cd = std::get<1>( this->data[arg] );
+						d = *cd->at( index );
+					}
+				} else if constexpr ( std::is_same_v<std::decay_t<decltype(arg)>, std::string> ) {
+					const std::string name = arg;
+					for ( uint_fast16_t i = 0; i < this->data.size(); i++ ) {
+						if ( std::get<0>( this->data[i] ) == name ) {
+							cd = std::get<1>( this->data[i] );
+							d = *cd->at( index );
+							break;
+						}
+					}
+				}
+			}, identifier );
+		}
+
+		return d;
+	}
+
 	uint_fast64_t table::display() const {
 		uint_fast64_t rows = 0;
 		if ( data.size() ) {

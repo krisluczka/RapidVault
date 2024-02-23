@@ -1,6 +1,5 @@
 ﻿#include <iostream>
-#include "table.h"
-#include "database.h"
+#include "RapidVault.h"
 
 
 int main() {
@@ -82,5 +81,5 @@ int main() {
 	t->change_row( 3, "id", 3 );
 	t->change_row( 3, "name", "Krakow" );
 
-	db.rvquery( "SELECT users; JOIN users.profession N1 id professions; PICK users.name professions.profession_name" );
+	db.rvquery( "SELECT users; JOIN users.profession N1 id professions; WHERE professions.salary users.main_city / 413 >; PICK users.name users.surname" );
 }

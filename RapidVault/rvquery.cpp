@@ -72,7 +72,7 @@
 
 namespace rv {
     bool database::evaluate_expression( std::vector<std::string*>& tokens, uint_fast64_t row ) {
-        std::stack<double> values;
+        std::stack<long double> values;
 
         for ( std::string *token : tokens ) {
             // checking if we're dealing with a number
@@ -83,17 +83,17 @@ namespace rv {
             // checking if we're dealing with any operator
             else if ( isOperator( *token ) ) {
                 if ( values.size() < 2 ) {
-                    //std::cerr << "Invalid expression format!" << std::endl;
+                    std::cerr << "ERR: Invalid expression format!" << std::endl;
                     return NAN;
                 }
-                double val2 = values.top();
+                long double val2 = values.top();
                 values.pop();
-                double val1 = values.top();
+                long double val1 = values.top();
                 values.pop();
-                double result;
+                long double result;
                 if ( *token == "/" ) {
                     if ( val2 == 0 ) {
-                        //std::cerr << "Division by zero error!" << std::endl;
+                        std::cerr << "ERR: Division by zero error!" << std::endl;
                         return NAN;
                     }
                     result = val1 / val2;
@@ -112,17 +112,35 @@ namespace rv {
 
                 values.push( result );
             }
-            // any other type of token means a column name for a given row
+            // any other type of token means a column name for a given row or a string
             else {
+                // checking if the column exists (for now assuming it's a column)
                 uint_fast16_t index = operation_table->get_column_index( *token );
+                cell_data data;
+                if ( index != NULL16_INDEX ) {
+                    data = operation_table->get_row(row, index);
+                    long double value = 0;
+                    
+                    // i need to switch the stack to cell_data so this code will be useless in a moment
+                    if ( auto* ptr = std::get_if<long double>( &data ) ) {
+                        value = static_cast<long double>(*ptr);
+                    } else if ( auto* ptr = std::get_if<int_fast64_t>( &data ) ) {
+                        value = static_cast<int_fast64_t>(*ptr);
+                    } else {
+                        // string
+                    }
+                    values.push( value );
+                } else {
+                    std::cerr << "ERR: Invalid column name!" << std::endl;
+                    return NAN;
+                }
             }
         }
 
         if ( values.size() != 1 ) {
-            //std::cerr << "Invalid expression format!" << std::endl;
+            std::cerr << "ERR: Invalid expression format!" << std::endl;
             return NAN;
         }
-
         return values.top();
     }
 
@@ -284,7 +302,37 @@ namespace rv {
                     std::cerr << "ERR: Not enough arguments!" << std::endl;
                 }
             } else if ( *tokens[0] == "WHERE" ) {
+                if ( tokens.size() > 1 ) {
+                    // checking whether the 'SELECT' occurred
+                    if ( operation_table->data.size() ) {
+                        // deleting the "WHERE"
+                        tokens.erase( tokens.begin() );
+                        // the amount of rows based on the first column
+                        uint_fast64_t rows = std::get<1>( operation_table->data[0] )->size();
+                        bool check = true;
 
+                        for ( uint_fast64_t row = 0; row < rows; row++ ) {
+                            check = evaluate_expression( tokens, row );
+                            // if row does not match the expressions, we erase it
+                            if ( !check ) {
+                                column_data* cd;
+                                for ( column_whole cw : operation_table->data ) {
+                                    cd = std::get<1>( cw );
+                                    delete cd->at( row );
+                                    cd->erase( cd->begin() + row );
+                                }
+                                // when erasing the number of rows decreases
+                                // and the index stays the same
+                                rows--;
+                                row--;
+                            }
+                        }
+                    } else {
+                        std::cerr << "ERR: Didn't specify a starting table!" << std::endl;
+                    }
+                } else {
+                    std::cerr << "ERR: Not enough arguments!" << std::endl;
+                }
             } else if ( *tokens[0] == "UPDATE" ) {
 
             }

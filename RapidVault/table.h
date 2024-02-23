@@ -14,7 +14,7 @@
 namespace rv {
 	// Cell data
 	//typedef std::variant<bool, int_fast32_t, int_fast64_t, float, double, std::string> cell_data;
-	typedef std::variant<int_fast64_t, double, std::string> cell_data;
+	typedef std::variant<int_fast64_t, long double, std::string> cell_data;
 	// Column data
 	typedef std::vector<cell_data*> column_data;
 	// Whole column (column name, column type, pointer to column)
@@ -81,6 +81,11 @@ namespace rv {
 				Changing values of given row
 			*/
 			void change_row( uint_fast64_t, std::variant<uint_fast16_t, std::string>, cell_data );
+
+			/*
+				Returns a row value
+			*/
+			cell_data get_row( uint_fast64_t, std::variant<uint_fast16_t, std::string> );
 
 			/*
 				###############################
