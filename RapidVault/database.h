@@ -4,6 +4,7 @@
 #pragma once
 #include <iostream>
 #include "table.h"
+#include <cstdlib>
 #include <variant>
 #include <vector>
 #include <string>
@@ -118,7 +119,7 @@ namespace rv {
 				Evaluates mathematical/logical expressions for WHERE directive
 				Returns boolean type variable
 			*/
-			bool expression_rpn( std::string );
+			bool evaluate_expression( std::vector<std::string*>&, uint_fast64_t );
 
 			/*
 				The heart of RVquery

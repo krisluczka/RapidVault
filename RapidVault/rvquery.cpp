@@ -68,22 +68,20 @@
     >   WHERE expressions   <
 */
 #include "database.h"
-#define isOperator(token) (token == "+" || token == "-" || token == "*" || token == "/" || token == "^" || token == "&&" || token == "||" || token == "<" || token == "<=" || token == ">" || token == ">=" || token == "==" || token == "!=" )
+#define isOperator(token) (token == "+" || token == "-" || token == "*" || token == "/" || token == "&&" || token == "||" || token == "<" || token == "<=" || token == ">" || token == ">=" || token == "==" || token == "!=" )
 
 namespace rv {
-    bool database::expression_rpn( std::string expression ) {
-        std::istringstream iss( expression );
+    bool database::evaluate_expression( std::vector<std::string*>& tokens, uint_fast64_t row ) {
         std::stack<double> values;
-        std::string token;
 
-        while ( iss >> token ) {
-            // real numbers check
-            if ( isdigit( token[0] ) || (token[0] == '-' && isdigit( token[1] )) ) {
-                values.push( std::stod( token ) );
+        for ( std::string *token : tokens ) {
+            // checking if we're dealing with a number
+            if ( isdigit( token->at(0) ) || (token->at(0) == '-' && isdigit(token->at(1))) ) {
+                values.push( std::stod( *token ) );
             }
 
             // checking if we're dealing with any operator
-            else if ( isOperator( token ) ) {
+            else if ( isOperator( *token ) ) {
                 if ( values.size() < 2 ) {
                     //std::cerr << "Invalid expression format!" << std::endl;
                     return NAN;
@@ -93,41 +91,30 @@ namespace rv {
                 double val1 = values.top();
                 values.pop();
                 double result;
-                if ( token == "+" ) {
-                    result = val1 + val2;
-                } else if ( token == "-" ) {
-                    result = val1 - val2;
-                } else if ( token == "*" ) {
-                    result = val1 * val2;
-                } else if ( token == "/" ) {
+                if ( *token == "/" ) {
                     if ( val2 == 0 ) {
                         //std::cerr << "Division by zero error!" << std::endl;
                         return NAN;
                     }
                     result = val1 / val2;
-                } else if ( token == "^" ) {
-                    result = pow( val1, val2 );
-                } else if ( token == "&&" ) {
-                    result = val1 && val2;
-                } else if ( token == "||" ) {
-                    result = val1 || val2;
-                } else if ( token == "<" ) {
-                    result = val1 < val2;
-                } else if ( token == "<=" ) {
-                    result = val1 <= val2;
-                } else if ( token == ">" ) {
-                    result = val1 > val2;
-                } else if ( token == ">=" ) {
-                    result = val1 >= val2;
-                } else if ( token == "==" ) {
-                    result = val1 == val2;
-                } else if ( token == "!=" ) {
-                    result = val1 != val2;
                 }
+                else if ( *token == "+" )   result = val1 + val2;
+                else if ( *token == "-" )   result = val1 - val2;
+                else if ( *token == "*" )   result = val1 * val2;
+                else if ( *token == "&&" )  result = val1 && val2;
+                else if ( *token == "||" )  result = val1 || val2;
+                else if ( *token == "<" )   result = val1 < val2;
+                else if ( *token == "<=" )  result = val1 <= val2;
+                else if ( *token == ">" )   result = val1 > val2;
+                else if ( *token == ">=" )  result = val1 >= val2;
+                else if ( *token == "==" )  result = val1 == val2;
+                else if ( *token == "!=" )  result = val1 != val2;
+
                 values.push( result );
-            } else {
-                //std::cerr << "Invalid token: " << token << std::endl;
-                return NAN;
+            }
+            // any other type of token means a column name for a given row
+            else {
+                uint_fast16_t index = operation_table->get_column_index( *token );
             }
         }
 

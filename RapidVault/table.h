@@ -13,7 +13,8 @@
 
 namespace rv {
 	// Cell data
-	typedef std::variant<bool, int_fast32_t, int_fast64_t, float, double, std::string> cell_data;
+	//typedef std::variant<bool, int_fast32_t, int_fast64_t, float, double, std::string> cell_data;
+	typedef std::variant<int_fast64_t, double, std::string> cell_data;
 	// Column data
 	typedef std::vector<cell_data*> column_data;
 	// Whole column (column name, column type, pointer to column)
