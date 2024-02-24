@@ -18,107 +18,21 @@ namespace rv {
 		delete operation_table;
 	}
 
-	//uint_fast64_t database::add_relation( std::variant<uint_fast64_t, std::string> A, std::variant<uint_fast64_t, std::string> B, uint_fast8_t type ) {
-	//	uint_fast64_t index = NULL64_INDEX;
-	//	uint_fast64_t index_A = NULL64_INDEX;
-	//	uint_fast64_t index_B = NULL64_INDEX;
-
-	//	// checking the table A identifier
-	//	std::visit( [this, &index_A]( auto arg ) {
-	//		if constexpr ( std::is_same_v<std::decay_t<decltype(arg)>, uint_fast64_t> ) {
-	//			index_A = arg;
-	//		} else if constexpr ( std::is_same_v<std::decay_t<decltype(arg)>, std::string> ) {
-	//			const std::string n = arg;
-	//			for ( uint_fast64_t i = 0; i < this->tables.size(); i++ ) {
-	//				if ( tables[i]->name == n ) {
-	//					index_A = i;
-	//					break;
-	//				}
-	//			}
-	//		}
-	//	}, A );
-
-	//	// checking the table B identifier
-	//	std::visit( [this, &index_B]( auto arg ) {
-	//		if constexpr ( std::is_same_v<std::decay_t<decltype(arg)>, uint_fast64_t> ) {
-	//			index_B = arg;
-	//		} else if constexpr ( std::is_same_v<std::decay_t<decltype(arg)>, std::string> ) {
-	//			const std::string n = arg;
-	//			for ( uint_fast64_t i = 0; i < this->tables.size(); i++ ) {
-	//				if ( tables[i]->name == n ) {
-	//					index_B = i;
-	//					break;
-	//				}
-	//			}
-	//		}
-	//	}, B );
-
-	//	// if it's valid, push it
-	//	if ( (index_A != NULL64_INDEX) && (index_B != NULL64_INDEX) && (type < 4) ) {
-	//		relation* r = new relation( index_A, index_B, type );
-	//		relations.push_back( r );
-	//		index = relations.size() - 1;
-	//	}
-	//	
-	//	return index;
-	//}
-
-	//uint_fast64_t database::remove_relation( uint_fast64_t index ) {
-	//	if ( (index != NULL64_INDEX) && (index < this->relations.size()) ) {
-	//		relation* r = relations[index];
-	//		delete r;
-	//		relations.erase( relations.begin() + index );
-	//	}
-	//	return relations.size();
-	//}
-
-	//uint_fast64_t database::remove_relation( std::variant<uint_fast64_t, std::string> A, std::variant<uint_fast64_t, std::string> B ) {
-	//	uint_fast64_t index_A = NULL64_INDEX;
-	//	uint_fast64_t index_B = NULL64_INDEX;
-
-	//	// checking the table A identifier
-	//	std::visit( [this, &index_A]( auto arg ) {
-	//		if constexpr ( std::is_same_v<std::decay_t<decltype(arg)>, uint_fast64_t> ) {
-	//			index_A = arg;
-	//		} else if constexpr ( std::is_same_v<std::decay_t<decltype(arg)>, std::string> ) {
-	//			const std::string n = arg;
-	//			for ( uint_fast64_t i = 0; i < this->tables.size(); i++ ) {
-	//				if ( tables[i]->name == n ) {
-	//					index_A = i;
-	//					break;
-	//				}
-	//			}
-	//		}
-	//	}, A );
-
-	//	// checking the table B identifier
-	//	std::visit( [this, &index_B]( auto arg ) {
-	//		if constexpr ( std::is_same_v<std::decay_t<decltype(arg)>, uint_fast64_t> ) {
-	//			index_B = arg;
-	//		} else if constexpr ( std::is_same_v<std::decay_t<decltype(arg)>, std::string> ) {
-	//			const std::string n = arg;
-	//			for ( uint_fast64_t i = 0; i < this->tables.size(); i++ ) {
-	//				if ( tables[i]->name == n ) {
-	//					index_B = i;
-	//					break;
-	//				}
-	//			}
-	//		}
-	//	}, B );
-
-	//	// searching for a given relation and removing it
-	//	relation* r;
-	//	for ( uint_fast64_t index = 0; index < relations.size(); index++ ) {
-	//		r = relations[index];
-	//		if ( (r->A == index_A) && (r->B == index_B) ) {
-	//			delete r;
-	//			relations.erase( relations.begin() + index );
-	//			break;
-	//		}
-	//	}
-
-	//	return relations.size();
-	//}
+	void database::display() {
+		uint_fast16_t table_amount;
+		uint_fast64_t row_amount = 0;
+		table_amount = tables.size();
+		std::cout << " # " << name << " ( " << table_amount << " tables in total )\n";
+		for ( table* t : tables ) {
+			if ( t->data.size() ) row_amount = std::get<1>( t->data[0] )->size();
+			std::cout << "    " << t->name << " ( " << row_amount << " rows in total )\n";
+			for ( column_whole cw : t->data ) {
+				std::cout << "     * " << std::get<0>( cw ) << "\n";
+			}
+			row_amount = 0;
+			std::cout << "\n";
+		}
+	}
 
 	table* database::create_table( std::string name ) {
 		table* t = new table;

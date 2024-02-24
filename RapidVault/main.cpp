@@ -81,5 +81,5 @@ int main() {
 	t->change_row( 3, "id", 3 );
 	t->change_row( 3, "name", "Krakow" );
 
-	db.rvquery( "SELECT users; JOIN users.profession N1 id professions; WHERE professions.salary users.main_city / 413 >; PICK users.name users.surname" );
+	db.rvquery( "SELECT users; JOIN users.profession N1 id professions; WHERE professions.city 2 ==" );
 }

@@ -71,13 +71,102 @@
 #define isOperator(token) (token == "+" || token == "-" || token == "*" || token == "/" || token == "&&" || token == "||" || token == "<" || token == "<=" || token == ">" || token == ">=" || token == "==" || token == "!=" )
 
 namespace rv {
+    cell_data database::evaluate_operator( cell_data* A, cell_data* B, std::string token ) {
+        long double a = 0, b = 0;
+        std::string as = "", bs = "";
+        bool a_string = false, b_string = false;
+        cell_data result = 0;
+
+        // getting the A
+        if ( std::holds_alternative<int_fast64_t>( *A ) ) {
+            a = static_cast<long double>(std::get<int_fast64_t>( *A ));
+        } else if ( std::holds_alternative<long double>( *A )) {
+            a = std::get<long double>( *A );
+        } else {
+            as = std::get<std::string>( *A );
+            a_string = true;
+        }
+
+        // getting the B
+        if ( std::holds_alternative<int_fast64_t>( *B ) ) {
+            b = static_cast<long double>(std::get<int_fast64_t>( *B ));
+        } else if ( std::holds_alternative<long double>( *B ) ) {
+            b = std::get<long double>( *B );
+        } else {
+            bs = std::get<std::string>( *B );
+            b_string = true;
+        }
+
+        // checking every type of operator
+        if ( token == "+" ) {
+            if ( a_string && b_string )       result = as + bs;
+            else if ( !a_string && b_string ) result = std::to_string( a ) + bs;
+            else if ( a_string && !b_string ) result = as + std::to_string( b );
+            else                              result = a + b;
+        } else if ( token == "-" ) {
+            if ( a_string && b_string )       result = static_cast<int_fast64_t>(as.length() - bs.length());
+            else if ( !a_string && b_string ) result = a - bs.length();
+            else if ( a_string && !b_string ) result = as.length() - b;
+            else                              result = a - b;
+        } else if ( token == "*" ) {
+            if ( a_string && b_string )       result = static_cast<int_fast64_t>(as.length() * bs.length());
+            else if ( !a_string && b_string ) result = a * bs.length();
+            else if ( a_string && !b_string ) result = as.length() * b;
+            else                              result = a * b;
+        } else if ( token == "&&" ) {
+            if ( a_string && b_string )       result = as.length() && bs.length();
+            else if ( !a_string && b_string ) result = a && bs.length();
+            else if ( a_string && !b_string ) result = as.length() && b;
+            else                              result = a && b;
+        } else if ( token == "||" ) {
+            if ( a_string && b_string )       result = as.length() || bs.length();
+            else if ( !a_string && b_string ) result = a || bs.length();
+            else if ( a_string && !b_string ) result = as.length() || b;
+            else                              result = a || b;
+        } else if ( token == "<" ) {
+            if ( a_string && b_string )       result = as.length() < bs.length();
+            else if ( !a_string && b_string ) result = a < bs.length();
+            else if ( a_string && !b_string ) result = as.length() < b;
+            else                              result = a < b;
+        } else if ( token == "<=" ) {
+            if ( a_string && b_string )       result = as.length() <= bs.length();
+            else if ( !a_string && b_string ) result = a <= bs.length();
+            else if ( a_string && !b_string ) result = as.length() <= b;
+            else                              result = a <= b;
+        } else if ( token == ">" ) {
+            if ( a_string && b_string )       result = as.length() > bs.length();
+            else if ( !a_string && b_string ) result = a > bs.length();
+            else if ( a_string && !b_string ) result = as.length() > b;
+            else                              result = a > b;
+        } else if ( token == ">=" ) {
+            if ( a_string && b_string )       result = as.length() >= bs.length();
+            else if ( !a_string && b_string ) result = a >= bs.length();
+            else if ( a_string && !b_string ) result = as.length() >= b;
+            else                              result = a >= b;
+        } else if ( token == "==" ) {
+            if ( a_string && b_string )       result = as == bs;
+            else if ( !a_string && b_string ) result = a == bs.length();
+            else if ( a_string && !b_string ) result = as.length() == b;
+            else                              result = a == b;
+        } else if ( token == "!=" ) {
+            if ( a_string && b_string )       result = as.length() != bs.length();
+            else if ( !a_string && b_string ) result = a != bs.length();
+            else if ( a_string && !b_string ) result = as.length() != b;
+            else                              result = a != b;
+        }
+
+        return result;
+    }
+
     bool database::evaluate_expression( std::vector<std::string*>& tokens, uint_fast64_t row ) {
-        std::stack<long double> values;
+        std::stack<cell_data*> values;
+        bool result = true;
 
         for ( std::string *token : tokens ) {
             // checking if we're dealing with a number
             if ( isdigit( token->at(0) ) || (token->at(0) == '-' && isdigit(token->at(1))) ) {
-                values.push( std::stod( *token ) );
+                cell_data* cd = new cell_data( stod( *token ) );
+                values.push( cd );
             }
 
             // checking if we're dealing with any operator
@@ -86,50 +175,25 @@ namespace rv {
                     std::cerr << "ERR: Invalid expression format!" << std::endl;
                     return NAN;
                 }
-                long double val2 = values.top();
+                cell_data *B = values.top();
                 values.pop();
-                long double val1 = values.top();
+                cell_data *A = values.top();
                 values.pop();
-                long double result;
-                if ( *token == "/" ) {
-                    if ( val2 == 0 ) {
-                        std::cerr << "ERR: Division by zero error!" << std::endl;
-                        return NAN;
-                    }
-                    result = val1 / val2;
-                }
-                else if ( *token == "+" )   result = val1 + val2;
-                else if ( *token == "-" )   result = val1 - val2;
-                else if ( *token == "*" )   result = val1 * val2;
-                else if ( *token == "&&" )  result = val1 && val2;
-                else if ( *token == "||" )  result = val1 || val2;
-                else if ( *token == "<" )   result = val1 < val2;
-                else if ( *token == "<=" )  result = val1 <= val2;
-                else if ( *token == ">" )   result = val1 > val2;
-                else if ( *token == ">=" )  result = val1 >= val2;
-                else if ( *token == "==" )  result = val1 == val2;
-                else if ( *token == "!=" )  result = val1 != val2;
 
-                values.push( result );
+                // evaluating the operator
+                cell_data* cd = new cell_data( evaluate_operator( A, B, *token ) );
+                values.push( cd );
+
+                delete A;
+                delete B;
             }
             // any other type of token means a column name for a given row or a string
             else {
                 // checking if the column exists (for now assuming it's a column)
                 uint_fast16_t index = operation_table->get_column_index( *token );
-                cell_data data;
                 if ( index != NULL16_INDEX ) {
-                    data = operation_table->get_row(row, index);
-                    long double value = 0;
-                    
-                    // i need to switch the stack to cell_data so this code will be useless in a moment
-                    if ( auto* ptr = std::get_if<long double>( &data ) ) {
-                        value = static_cast<long double>(*ptr);
-                    } else if ( auto* ptr = std::get_if<int_fast64_t>( &data ) ) {
-                        value = static_cast<int_fast64_t>(*ptr);
-                    } else {
-                        // string
-                    }
-                    values.push( value );
+                    cell_data* cd = new cell_data( operation_table->get_row( row, index ) );
+                    values.push( cd );
                 } else {
                     std::cerr << "ERR: Invalid column name!" << std::endl;
                     return NAN;
@@ -141,7 +205,16 @@ namespace rv {
             std::cerr << "ERR: Invalid expression format!" << std::endl;
             return NAN;
         }
-        return values.top();
+        
+        // false (empty string or 0), true (anything else)
+        if ( std::holds_alternative<std::string>( *values.top() ) )
+            result = !std::get<std::string>( *values.top() ).empty();
+        else if ( std::holds_alternative<int_fast64_t>( *values.top() ) )
+            result = std::get<int_fast64_t>( *values.top() );
+        else if ( std::holds_alternative<long double>( *values.top() ) )
+            result = std::get<long double>( *values.top() );
+
+        return result;
     }
 
 	void database::rvquery( std::string query ) {
