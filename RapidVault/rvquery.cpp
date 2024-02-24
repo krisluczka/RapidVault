@@ -184,6 +184,7 @@ namespace rv {
                 cell_data* cd = new cell_data( evaluate_operator( A, B, *token ) );
                 values.push( cd );
 
+                // !!!
                 delete A;
                 delete B;
             }
@@ -203,6 +204,11 @@ namespace rv {
 
         if ( values.size() != 1 ) {
             std::cerr << "ERR: Invalid expression format!" << std::endl;
+            // !!!
+            for ( uint_fast64_t i = 0; i < values.size(); i++ ) {
+                delete values.top();
+                values.pop();
+            }
             return NAN;
         }
         
@@ -213,6 +219,9 @@ namespace rv {
             result = std::get<int_fast64_t>( *values.top() );
         else if ( std::holds_alternative<long double>( *values.top() ) )
             result = std::get<long double>( *values.top() );
+
+        // !!!
+        delete values.top();
 
         return result;
     }
