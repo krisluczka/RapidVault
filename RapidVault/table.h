@@ -27,8 +27,8 @@ namespace rv {
 		public:
 			table( std::string );
 			table();
-			table( const table& other );
-			table& operator=( const table& other );
+			table( const table& );
+			table& operator=( const table& );
 			~table();
 
 

@@ -13,14 +13,23 @@ namespace rv {
 		if ( this != &other ) {
 			this->name = other.name;
 
+			column_data* cd;
+			for ( column_whole cw : data ) {
+				cd = std::get<1>( cw );
+				for ( cell_data* dc : *cd ) {
+					delete dc;
+				}
+				delete cd;
+			}
+
 			this->data.clear();
 			// deep copy
-			for ( const auto& tuple : other.data ) {
+			for ( column_whole cw : other.data ) {
 				// column name copy
-				std::string n = std::get<0>( tuple );
+				std::string n = static_cast<std::string>(std::get<0>( cw ));
 
-				// pointer for old column_data
-				const column_data* cd_ptr = std::get<1>( tuple );
+				// pointer for new column_data
+				column_data* cd_ptr = std::get<1>( cw );
 
 				// new column_data
 				column_data* cd = new column_data;
@@ -40,16 +49,25 @@ namespace rv {
 	table& table::operator=( const table& other ) {
 		if ( this != &other ) {
 			this->name = other.name;
+			
+			column_data* cd;
+			for ( column_whole cw : data ) {
+				cd = std::get<1>( cw );
+				for ( cell_data* dc : *cd ) {
+					delete dc;
+				}
+				delete cd;
+			}
 
 			this->data.clear();
 			// deep copy
-			for ( const auto& tuple : other.data ) {
+			for ( column_whole cw : other.data ) {
 				// column name copy
-				std::string n = std::get<0>( tuple );
+				std::string n = static_cast<std::string>(std::get<0>( cw ));
 
-				// pointer for old column_data
-				const column_data* cd_ptr = std::get<1>( tuple );
-				
+				// pointer for new column_data
+				column_data* cd_ptr = std::get<1>( cw );
+
 				// new column_data
 				column_data* cd = new column_data;
 				cd->reserve( cd_ptr->size() );
@@ -122,6 +140,9 @@ namespace rv {
 				if ( (index != NULL16_INDEX) && (index < this->data.size()) ) {
 					// don't forget about this!
 					column_data* cd = std::get<1>( this->data[index] );
+					for ( cell_data* data : *cd ) {
+						delete data;
+					}
 					delete cd;
 					this->data.erase( this->data.begin() + index );
 				}
@@ -131,9 +152,11 @@ namespace rv {
 				for ( uint_fast16_t i = 0; i < this->data.size(); i++ ) {
 					if ( std::get<0>( this->data[i] ) == name ) {
 						index = i;
-
 						// don't forget about this!
 						column_data* cd = std::get<1>( this->data[index] );
+						for ( cell_data* data : *cd ) {
+							delete data;
+						}
 						delete cd;
 						this->data.erase( this->data.begin() + index );
 						break;

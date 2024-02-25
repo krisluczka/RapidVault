@@ -221,51 +221,13 @@ namespace rv {
             result = std::get<long double>( *values.top() );
 
         // !!!
-        delete values.top();
+        for ( uint_fast64_t i = 0; i < values.size(); i++ ) {
+            delete values.top();
+            values.pop();
+        }
 
         return result;
     }
-
-	void database::rvquery( std::string query ) {
-        // reseting the query table
-        delete operation_table;
-        operation_table = new table;
-
-        // dividing the query into lines ending with a semicolon
-        std::vector<std::string*> lines;
-        std::istringstream q(query);
-        std::string line;
-        while ( std::getline( q, line, ';' ) ) {
-            lines.push_back( new std::string( line ) );
-        }
-
-        std::vector<std::string*> tokens;
-        for ( std::string* l : lines ) {
-            // dividing every line into tokens
-            tokens.clear();
-            std::istringstream iss( *l );
-            std::string token;
-            while ( iss >> token ) {
-                tokens.push_back( new std::string( token ) );
-            }
-
-            // evaluating the RVquery
-            go_go_gadget_query( tokens );
-
-            // detokenizing :D
-            for ( std::string* token : tokens ) {
-                delete token;
-            }
-        }
-
-        // delining :D
-        for ( std::string* line : lines ) {
-            delete line;
-        }
-
-        // showing results
-        operation_table->display();
-	}
 
     void database::go_go_gadget_query( std::vector<std::string*>& tokens ) {
         if ( tokens.size() ) { // ignoring empty lines
@@ -338,7 +300,6 @@ namespace rv {
                                             }
                                         }
                                     }
-
                                     // deleting the columns on which the JOIN was based
                                     other_column_index += main_column_amount;
                                     operation_table->delete_column( other_column_index );
@@ -366,6 +327,7 @@ namespace rv {
             } else if ( *tokens[0] == "PICK" ) {
                 if ( tokens.size() > 1 ) {
                     // deleting the "PICK"
+                    delete tokens[0];
                     tokens.erase( tokens.begin() );
                     table* ot = new table;
 
@@ -374,12 +336,24 @@ namespace rv {
                     for ( std::string* token : tokens ) {
                         index = operation_table->get_column_index( *token );
                         if ( index != NULL16_INDEX ) {
-                            ot->data.push_back( operation_table->data[index] );
+                            // 1.5 hours of trying to find a solution (alongside with table constructor)
+                            column_data *new_data = new column_data;
+                            std::string new_name = std::get<0>( operation_table->data[index] );
+                            
+                            // deep copy
+                            for ( cell_data* dc : *std::get<1>(operation_table->data[index]) ) {
+                                new_data->push_back( new cell_data( *dc ) );
+                            }
+
+                            column_whole cw = std::make_tuple( new_name, new_data );
+                            ot->data.push_back( cw );
                         }
                     }
 
                     // replacing the tables
                     *operation_table = *ot;
+
+                    delete ot;
                 } else {
                     std::cerr << "ERR: Not enough arguments!" << std::endl;
                 }
@@ -388,6 +362,7 @@ namespace rv {
                     // checking whether the 'SELECT' occurred
                     if ( operation_table->data.size() ) {
                         // deleting the "WHERE"
+                        delete tokens[0];
                         tokens.erase( tokens.begin() );
                         // the amount of rows based on the first column
                         uint_fast64_t rows = std::get<1>( operation_table->data[0] )->size();
@@ -419,5 +394,46 @@ namespace rv {
 
             }
         }
+    }
+
+    void database::rvquery( std::string query ) {
+        // reseting the query table
+        delete operation_table;
+        operation_table = new table;
+
+        // dividing the query into lines ending with a semicolon
+        std::vector<std::string*> lines;
+        std::istringstream q( query );
+        std::string line;
+        while ( std::getline( q, line, ';' ) ) {
+            lines.push_back( new std::string( line ) );
+        }
+
+        std::vector<std::string*> tokens;
+        for ( std::string* l : lines ) {
+            // dividing every line into tokens
+            tokens.clear();
+            std::istringstream iss( *l );
+            std::string token;
+            while ( iss >> token ) {
+                tokens.push_back( new std::string( token ) );
+            }
+
+            // evaluating the RVquery
+            go_go_gadget_query( tokens );
+
+            // detokenizing :D
+            for ( std::string* token : tokens ) {
+                delete token;
+            }
+        }
+
+        // delining :D
+        for ( std::string* line : lines ) {
+            delete line;
+        }
+
+        // showing results
+        operation_table->display();
     }
 }
