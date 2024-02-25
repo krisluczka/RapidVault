@@ -48,13 +48,13 @@ namespace rv {
 				Deletes specified column
 				Returns new amount of columns
 			*/
-			uint_fast16_t delete_column( std::variant<uint_fast16_t, std::string> );
+			uint_fast16_t delete_column( uint_fast16_t );
 
 			/*
 				Renames specified column
 				Returns its index
 			*/
-			uint_fast16_t rename_column( std::variant<uint_fast16_t, std::string>, std::string );
+			uint_fast16_t rename_column( uint_fast16_t, std::string );
 
 			/*
 				Returns column's index
@@ -79,12 +79,13 @@ namespace rv {
 			/*
 				Changing values of given row
 			*/
-			void change_row( uint_fast64_t, std::variant<uint_fast16_t, std::string>, cell_data );
+			void change_row( uint_fast64_t, uint_fast16_t, cell_data );
+			void change_row( uint_fast64_t, std::string, cell_data );
 
 			/*
 				Returns a row value
 			*/
-			cell_data get_row( uint_fast64_t, std::variant<uint_fast16_t, std::string> );
+			cell_data get_row( uint_fast64_t, uint_fast16_t );
 
 			/*
 				###############################

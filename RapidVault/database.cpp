@@ -41,27 +41,6 @@ namespace rv {
 		return t;
 	}
 
-	table* database::get_table_pointer( std::variant<uint_fast64_t, std::string> identifier ) const {
-		// checking the table identifier
-		std::visit( [this]( auto arg ) {
-			if constexpr ( std::is_same_v<std::decay_t<decltype(arg)>, uint_fast64_t> ) {
-				if ( (arg != NULL64_INDEX) && (arg < this->tables.size()) ) {
-					return tables[arg];
-				}
-			} else if constexpr ( std::is_same_v<std::decay_t<decltype(arg)>, std::string> ) {
-				const std::string n = arg;
-				for ( uint_fast64_t i = 0; i < this->tables.size(); i++ ) {
-					if ( tables[i]->name == n ) {
-						return tables[i];
-						break; // :o
-					}
-				}
-			}
-		}, identifier );
-
-		return nullptr;
-	}
-
 	uint_fast64_t database::get_table_index( std::string identifier ) const {
 		// checking the table identifier
 		for ( uint_fast64_t i = 0; i < this->tables.size(); i++ ) {

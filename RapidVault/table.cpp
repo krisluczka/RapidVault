@@ -129,70 +129,25 @@ namespace rv {
 		}
 	}
 
-	uint_fast16_t table::delete_column( std::variant<uint_fast16_t, std::string> identifier ) {
-		uint_fast16_t index = NULL16_INDEX;
-
-		// checking the column identifier
-		std::visit( [this, &index]( auto arg ) {
-			if constexpr ( std::is_same_v<std::decay_t<decltype(arg)>, uint_fast16_t> ) {
-				index = arg;
-
-				if ( (index != NULL16_INDEX) && (index < this->data.size()) ) {
-					// don't forget about this!
-					column_data* cd = std::get<1>( this->data[index] );
-					for ( cell_data* data : *cd ) {
-						delete data;
-					}
-					delete cd;
-					this->data.erase( this->data.begin() + index );
-				}
-			} else if constexpr ( std::is_same_v<std::decay_t<decltype(arg)>, std::string> ) {
-				const std::string name = arg;
-
-				for ( uint_fast16_t i = 0; i < this->data.size(); i++ ) {
-					if ( std::get<0>( this->data[i] ) == name ) {
-						index = i;
-						// don't forget about this!
-						column_data* cd = std::get<1>( this->data[index] );
-						for ( cell_data* data : *cd ) {
-							delete data;
-						}
-						delete cd;
-						this->data.erase( this->data.begin() + index );
-						break;
-					}
-				}
+	uint_fast16_t table::delete_column( uint_fast16_t identifier ) {
+		if ( (identifier != NULL16_INDEX) && (identifier < this->data.size()) ) {
+			// don't forget about this!
+			column_data* cd = std::get<1>( this->data[identifier] );
+			for ( cell_data* data : *cd ) {
+				delete data;
 			}
-		}, identifier );
+			delete cd;
+			this->data.erase( this->data.begin() + identifier );
+		}
 
-		return index;
+		return identifier;
 	}
 
-	uint_fast16_t table::rename_column( std::variant<uint_fast16_t, std::string> identifier, std::string new_name ) {
-		uint_fast16_t index = NULL16_INDEX;
+	uint_fast16_t table::rename_column( uint_fast16_t identifier, std::string new_name ) {
+		if ( (identifier != NULL16_INDEX) && (identifier < this->data.size()) )
+			std::get<0>( this->data[identifier] ) = new_name;
 
-		// checking the column identifier
-		std::visit( [this, &new_name, &index]( auto arg ) {
-			if constexpr ( std::is_same_v<std::decay_t<decltype(arg)>, uint_fast16_t> ) {
-				index = arg;
-
-				if ( (index != NULL16_INDEX) && (index < this->data.size()) )
-					std::get<0>( this->data[index] ) = new_name;
-
-			} else if constexpr ( std::is_same_v<std::decay_t<decltype(arg)>, std::string> ) {
-				const std::string name = arg;
-				for ( uint_fast16_t i = 0; i < this->data.size(); i++ ) {
-					if ( std::get<0>( this->data[i] ) == name ) {
-						index = i;
-
-						std::get<0>( this->data[i] ) = new_name;
-						break;
-					}
-				}
-			}
-		}, identifier );
-
-		return index;
+		return identifier;
 	}
 
 	uint_fast16_t table::get_column_index( std::string name ) const {
@@ -217,62 +172,50 @@ namespace rv {
 				cd->push_back( d );
 			}
 
-			return cd->size();
+			return cd->size() - 1;
 		} else return NULL64_INDEX;
 	}
 
-	void table::change_row( uint_fast64_t index, std::variant<uint_fast16_t, std::string> identifier, cell_data d ) {
+	void table::change_row( uint_fast64_t index, uint_fast16_t identifier, cell_data d ) {
 		if ( data.size() ) {
 			// checking the amount of rows (based on first column)
 			column_data* cd = std::get<1>( this->data[0] );
 			uint_fast64_t rows = cd->size();
 			// checking the row identifier (only when the row exists)
 			if ( index < rows )
-			std::visit( [this, &cd, &d, &index]( auto arg ) {
-				if constexpr ( std::is_same_v<std::decay_t<decltype(arg)>, uint_fast16_t> ) {
-					if ( (arg != NULL16_INDEX) && (arg < this->data.size()) ) {
-						cd = std::get<1>( this->data[arg] );
-						*cd->at( index ) = d;
-					}
-				} else if constexpr ( std::is_same_v<std::decay_t<decltype(arg)>, std::string> ) {
-					const std::string name = arg;
-					for ( uint_fast16_t i = 0; i < this->data.size(); i++ ) {
-						if ( std::get<0>( this->data[i] ) == name ) {
-							cd = std::get<1>( this->data[i] );
-							*cd->at( index ) = d;
-							break;
-						}
-					}
-				}
-			}, identifier );
+			if ( (identifier != NULL16_INDEX) && (identifier < this->data.size()) ) {
+				cd = std::get<1>( this->data[identifier] );
+				*cd->at( index ) = d;
+			}
 		}
 	}
 
-	cell_data table::get_row( uint_fast64_t index, std::variant<uint_fast16_t, std::string> identifier ) {
+	void table::change_row( uint_fast64_t index, std::string identifier, cell_data d ) {
+		uint_fast16_t identi = get_column_index( identifier );
+		if ( data.size() ) {
+			// checking the amount of rows (based on first column)
+			column_data* cd = std::get<1>( this->data[0] );
+			uint_fast64_t rows = cd->size();
+			// checking the row identifier (only when the row exists)
+			if ( index < rows )
+				if ( (identi != NULL16_INDEX) && (identi < this->data.size()) ) {
+					cd = std::get<1>( this->data[identi] );
+					*cd->at( index ) = d;
+				}
+		}
+	}
+
+	cell_data table::get_row( uint_fast64_t index, uint_fast16_t identifier ) {
 		cell_data d = 0;
 		if ( data.size() ) {
 			// checking the amount of rows (based on first column)
 			column_data* cd = std::get<1>( this->data[0] );
 			uint_fast64_t rows = cd->size();
 			// checking the row identifier (only when the row exists)
-			if ( index < rows )
-				std::visit( [this, &cd, &d, &index]( auto arg ) {
-				if constexpr ( std::is_same_v<std::decay_t<decltype(arg)>, uint_fast16_t> ) {
-					if ( (arg != NULL16_INDEX) && (arg < this->data.size()) ) {
-						cd = std::get<1>( this->data[arg] );
-						d = *cd->at( index );
-					}
-				} else if constexpr ( std::is_same_v<std::decay_t<decltype(arg)>, std::string> ) {
-					const std::string name = arg;
-					for ( uint_fast16_t i = 0; i < this->data.size(); i++ ) {
-						if ( std::get<0>( this->data[i] ) == name ) {
-							cd = std::get<1>( this->data[i] );
-							d = *cd->at( index );
-							break;
-						}
-					}
-				}
-			}, identifier );
+			if ( (identifier != NULL16_INDEX) && (identifier < this->data.size()) ) {
+				cd = std::get<1>( this->data[identifier] );
+				d = *cd->at( index );
+			}
 		}
 
 		return d;

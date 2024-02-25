@@ -45,11 +45,6 @@ namespace rv {
 			uint_fast64_t remove_table();
 
 			/*
-				Returns a pointer to given table
-			*/
-			table* get_table_pointer( std::variant<uint_fast64_t, std::string> ) const;
-
-			/*
 				Returns an index to given table with certain name
 			*/
 			uint_fast64_t get_table_index( std::string ) const;

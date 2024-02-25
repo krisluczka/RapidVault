@@ -4,7 +4,7 @@
 
 
 
-	#	RVquery small documentation		#
+	#   RVquery small documentation     #
 
 
 	Queries are written by singular commands separated by a semicolon.
@@ -46,24 +46,53 @@
         ALIAS <column> <new_name> - selects given column and renames them
             ALIAS main.test Testing_column
 
-		PICK <col1> <col2> ... - selects given columns, discarding others
+		PICK <column> <column> ... - selects given columns, discarding others
 		from the final result
 			PICK users.name main.title;
 
 		WHERE <expression> - selects only these rows, where the expression is true
 		! WARNING ! Expressions use Reverse Polish Notation
-			WHERE main.age users.age > main.experience users.experience > &&;
+			WHERE main.age users.age > main.experience users.experience > &&;\
 
-		UPDATE <column> <value> - changes every value in the given column
+        PUSH <value> <value> ... - inserts a row to the operation table
+            PUSH "Krzysztof" "Luczka" 18;
+
+
+
+	>	Manipulating queries    <
+
+		INSERT <table> <value> <value> ... - inserts a new row to a specified table,
+        with the same order as the columns are given
+            INSERT users "Krzysztof" "Luczka";
+
+        DELETE - deletes currently selected rows
+
+        DELETE <table> - deletes specified table
+            DELETE test_table;
+
+        UPDATE <column> <value> - updates the values of the selected rows in
+        a given column
 			UPDATE users.age 18;
 
 
 
-	>	Manipulating queries	<
+    >   Keywords    <
+        
+        DISTINCT <column> - selects only distinct rows by given column
+            DISTINCT users.id;
 
-		INSERT
+        ASCENDING/DESCENDING <column> - sorts ascending or descending relative
+        to the selected column
+            ASCENDING users.age;
 
+        SUM <column> <column> ... - sums given columns
+            SUM users.money; users.debt;
 
+        AVG <column> <column> ... - averages given columns
+            AVG users.age;
+
+        MIN/MAX <column> - selects the row with the smallest/largest value in the column
+            MAX users.debt;
 
     >   WHERE expressions   <
 */
@@ -113,6 +142,11 @@ namespace rv {
             else if ( !a_string && b_string ) result = a * bs.length();
             else if ( a_string && !b_string ) result = as.length() * b;
             else                              result = a * b;
+        } else if ( token == "/" ) {
+            if ( a_string && b_string )       if ( bs.length() != 0 ) result = static_cast<int_fast64_t>(as.length() / bs.length()); else return NAN;
+            else if ( !a_string && b_string ) if ( bs.length() != 0 ) result = a / bs.length(); else return NAN;
+            else if ( a_string && !b_string ) if ( b != 0 ) result = as.length() / b; else return NAN;
+            else                              if ( b != 0 ) result = a / b; else return NAN;
         } else if ( token == "&&" ) {
             if ( a_string && b_string )       result = as.length() && bs.length();
             else if ( !a_string && b_string ) result = a && bs.length();
@@ -162,7 +196,9 @@ namespace rv {
         std::stack<cell_data*> values;
         bool result = true;
 
-        for ( std::string *token : tokens ) {
+        //for ( std::string *token : tokens ) {
+        for ( uint_fast64_t i = 0; i < tokens.size(); i++ ) {
+            std::string* token = tokens[i];
             // checking if we're dealing with a number
             if ( isdigit( token->at(0) ) || (token->at(0) == '-' && isdigit(token->at(1))) ) {
                 cell_data* cd = new cell_data( stod( *token ) );
@@ -181,8 +217,8 @@ namespace rv {
                 values.pop();
 
                 // evaluating the operator
-                cell_data* cd = new cell_data( evaluate_operator( A, B, *token ) );
-                values.push( cd );
+                cell_data* value = new cell_data( evaluate_operator( A, B, *token ) );
+                values.push( value );
 
                 // !!!
                 delete A;
@@ -190,14 +226,22 @@ namespace rv {
             }
             // any other type of token means a column name for a given row or a string
             else {
-                // checking if the column exists (for now assuming it's a column)
-                uint_fast16_t index = operation_table->get_column_index( *token );
-                if ( index != NULL16_INDEX ) {
-                    cell_data* cd = new cell_data( operation_table->get_row( row, index ) );
-                    values.push( cd );
+                // checking if it's a string
+                if ( token->size() > 1 && token->front() == '\"' && token->back() == '\"' ) {
+                    //token->pop_back();
+                    //token->erase( 0, 1 );
+                    cell_data * value = new cell_data(token->substr( 1, token->size()-2 ));
+                    values.push( value );
                 } else {
-                    std::cerr << "ERR: Invalid column name!" << std::endl;
-                    return NAN;
+                    // checking if the column exists with given name exists
+                    uint_fast16_t index = operation_table->get_column_index( *token );
+                    if ( index != NULL16_INDEX ) {
+                        cell_data* value = new cell_data( operation_table->get_row( row, index ) );
+                        values.push( value );
+                    } else {
+                        std::cerr << "ERR: Invalid column name!" << std::endl;
+                        return NAN;
+                    }
                 }
             }
         }
@@ -320,7 +364,8 @@ namespace rv {
             } else if ( *tokens[0] == "ALIAS" ) {
                 if ( tokens.size() > 2 ) {
                     // renaming the column
-                    operation_table->rename_column( *tokens[1], *tokens[2] );
+                    uint_fast16_t index = operation_table->get_column_index( *tokens[1] );
+                    operation_table->rename_column( index, *tokens[2] );
                 } else {
                     std::cerr << "ERR: Not enough arguments!" << std::endl;
                 }
@@ -390,8 +435,39 @@ namespace rv {
                 } else {
                     std::cerr << "ERR: Not enough arguments!" << std::endl;
                 }
-            } else if ( *tokens[0] == "UPDATE" ) {
+            } else if ( *tokens[0] == "INSERT" ) { // TO REWRITE LATER
+                if ( tokens.size() > 1 ) {
+                    uint_fast64_t index = get_table_index( *tokens[1] );
+                    if ( index != NULL64_INDEX ) {
+                        table* t = tables[index];
+                        // creating a new row and filling them with given parameters
+                        uint_fast64_t row = t->create_row();
 
+                        for ( uint_fast16_t i = 0; i < t->data.size(); i++ ) {
+                            // if we moved too fast
+                            if ( i + 2 >= tokens.size() ) break;
+                            // converting given token to a number or string
+                            std::istringstream iss( *tokens[i + 2] );
+                            int_fast64_t data_int;
+                            long double data_float;
+                            // i didn't come up with better solution (to do for later)
+                            if ( iss >> data_float && (iss.clear(), iss.seekg( 0 ), iss >> data_int) ) {
+                                if ( data_float == data_int ) {
+                                    t->change_row( row, i, data_int );
+                                } else {
+                                    t->change_row( row, i, data_float );
+                                }
+                            } else {
+                                *tokens[i + 2] = tokens[i + 2]->substr( 1, tokens[i + 2]->length() - 2 );
+                                t->change_row( row, i, *tokens[i + 2] );
+                            }
+                        }
+                    } else {
+                        std::cerr << "ERR: Invalid table name!" << std::endl;
+                    }
+                } else {
+                    std::cerr << "ERR: Not enough arguments!" << std::endl;
+                }
             }
         }
     }
@@ -416,7 +492,17 @@ namespace rv {
             std::istringstream iss( *l );
             std::string token;
             while ( iss >> token ) {
-                tokens.push_back( new std::string( token ) );
+                // checking if it's a string separated by quotes
+                if (( token.front() == '\"' ) && (token.back() != '\"')) {
+                    std::string combined_token = token;
+                    while ( iss >> token ) {
+                        combined_token += " " + token;
+                        if ( token.back() == '\"' ) break;
+                    }
+                    tokens.push_back( new std::string( combined_token ) );
+                }
+                // if it's anything else (or a string fitting in a single token)
+                else tokens.push_back( new std::string( token ) );
             }
 
             // evaluating the RVquery
