@@ -221,121 +221,142 @@ namespace rv {
 		return d;
 	}
 
-	uint_fast64_t table::display() const {
+	uint_fast64_t table::display( DISPLAY_TYPE type ) const {
 		uint_fast64_t rows = 0;
 		if ( data.size() ) {
 			// checking the amount of rows (based on first column)
 			column_data* cd = std::get<1>( data[0] );
 			rows = cd->size();
+			// normal, report style
+			if ( type == DISPLAY_TYPE::NORMAL ) {
+				// searching for the longest string in every column and it's name
+				std::vector<uint_fast64_t> column_width( data.size(), 0 );
+				std::stringstream parser;
+				std::string string_parser = "";
 
-			// searching for the longest string in every column and it's name
-			std::vector<uint_fast64_t> column_width( data.size(), 0 );
-			std::stringstream parser;
-			std::string string_parser = "";
-
-			for ( uint_fast16_t column_index = 0; column_index < data.size(); column_index++ ) {
-				// checking whether the column's name is the longest
-				string_parser = std::get<0>( data[column_index] );
-				column_width[column_index] = std::max( column_width[column_index], string_parser.length() );
-			
-				for ( uint_fast64_t row = 0; row < rows; row++ ) {
-					// pointer to current column data
-					cd = std::get<1>( data[column_index] );
-
-					// using stringstream because we need to check for its length in characters
-					std::visit( [&parser, &string_parser, &column_width, &column_index]( auto arg ) {
-						parser << arg;
-						string_parser = parser.str();
-						column_width[column_index] = std::max( column_width[column_index], string_parser.length() );
-						parser.str( "" );
-					}, *cd->at( row ) );
-				}
-			}
-
-			// drawing the column's names
-			std::cout << 'o';
-			for ( uint_fast64_t cw = 0; cw < column_width.size(); cw++ ) {
-				std::cout << std::string( column_width[cw] + 2, '-' ) << 'o';
-			}
-			std::cout << "\n|";
-			for ( uint_fast16_t column_index = 0; column_index < data.size(); column_index++ ) {
-				string_parser = std::get<0>( data[column_index] );
-				std::cout << " " << std::left << std::setw( column_width[column_index] ) << string_parser << " |";
-			}
-			std::cout << "\n";
-
-			// drawing the table values
-			std::cout << '+';
-			for ( uint_fast64_t cw = 0; cw < column_width.size(); cw++ ) {
-				std::cout << std::string( column_width[cw] + 2, '-' ) << '+';
-			}
-			std::cout << "\n";
-			for ( uint_fast64_t row = 0; row < rows; row++ ) {
-				std::cout << "|";
 				for ( uint_fast16_t column_index = 0; column_index < data.size(); column_index++ ) {
-					// pointer to current column data
-					cd = std::get<1>( data[column_index] );
+					// checking whether the column's name is the longest
+					string_parser = std::get<0>( data[column_index] );
+					column_width[column_index] = std::max( column_width[column_index], string_parser.length() );
+			
+					for ( uint_fast64_t row = 0; row < rows; row++ ) {
+						// pointer to current column data
+						cd = std::get<1>( data[column_index] );
 
-					// displaying data
-					std::visit( [&column_index, &column_width]( auto arg ) {
-						std::cout << " " << std::left << std::setw(column_width[column_index]) << arg << " |";
-					}, *cd->at( row ) );
+						// using stringstream because we need to check for its length in characters
+						std::visit( [&parser, &string_parser, &column_width, &column_index]( auto arg ) {
+							parser << arg;
+							string_parser = parser.str();
+							column_width[column_index] = std::max( column_width[column_index], string_parser.length() );
+							parser.str( "" );
+						}, *cd->at( row ) );
+					}
 				}
-				std::cout << "\n+";
+
+				// drawing the column's names
+				std::cout << 'o';
+				for ( uint_fast64_t cw = 0; cw < column_width.size(); cw++ ) {
+					std::cout << std::string( column_width[cw] + 2, '-' ) << 'o';
+				}
+				std::cout << "\n|";
+				for ( uint_fast16_t column_index = 0; column_index < data.size(); column_index++ ) {
+					string_parser = std::get<0>( data[column_index] );
+					std::cout << " " << std::left << std::setw( column_width[column_index] ) << string_parser << " |";
+				}
+				std::cout << "\n";
+
+				// drawing the table values
+				std::cout << '+';
 				for ( uint_fast64_t cw = 0; cw < column_width.size(); cw++ ) {
 					std::cout << std::string( column_width[cw] + 2, '-' ) << '+';
 				}
 				std::cout << "\n";
-			}
-		}
-		return rows;
-	}
+				for ( uint_fast64_t row = 0; row < rows; row++ ) {
+					std::cout << "|";
+					for ( uint_fast16_t column_index = 0; column_index < data.size(); column_index++ ) {
+						// pointer to current column data
+						cd = std::get<1>( data[column_index] );
 
-	uint_fast64_t table::display_raw() const {
-		uint_fast64_t rows = 0;
-		if ( data.size() > 0 ) {
-			// checking the amount of rows (based on first column)
-			column_data* cd = std::get<1>( data[0] );
-			rows = cd->size();
-
-			for ( uint_fast64_t row = 0; row < rows; row++ ) {
-				for ( uint_fast16_t column_index = 0; column_index < data.size(); column_index++ ) {
-					// pointer to current column data
-					cd = std::get<1>( data[column_index] );
-
-					// displaying data
-					std::visit( [this, &column_index]( auto arg ) {
-						if ( column_index == data.size() - 1 ) std::cout << arg << ";";
-						else std::cout << arg << ",";
-					}, *cd->at( row ) );
+						// displaying data
+						std::visit( [&column_index, &column_width]( auto arg ) {
+							std::cout << " " << std::left << std::setw(column_width[column_index]) << arg << " |";
+						}, *cd->at( row ) );
+					}
+					std::cout << "\n+";
+					for ( uint_fast64_t cw = 0; cw < column_width.size(); cw++ ) {
+						std::cout << std::string( column_width[cw] + 2, '-' ) << '+';
+					}
+					std::cout << "\n";
 				}
-				std::cout << std::endl;
+			}
+			// raw style
+			else if ( type == DISPLAY_TYPE::RAW ) {
+				for ( uint_fast64_t row = 0; row < rows; row++ ) {
+					for ( uint_fast16_t column_index = 0; column_index < data.size(); column_index++ ) {
+						// pointer to current column data
+						cd = std::get<1>( data[column_index] );
+
+						// displaying data
+						std::visit( [this, &column_index]( auto arg ) {
+							if ( column_index == data.size() - 1 ) std::cout << arg;
+							else std::cout << arg << " ";
+						}, *cd->at( row ) );
+					}
+					std::cout << std::endl;
+				}
+			}
+			// json (by rows) style
+			else if ( type == DISPLAY_TYPE::JSON ) {
+				cell_data* dc;
+				uint_fast16_t columns = data.size();
+				uint_fast16_t max_columns = 0;
+				std::cout << "{" << std::endl;
+				for ( uint_fast64_t row = 0; row < rows; row++ ) {
+					std::cout << "    " << row << ": [ ";
+					for ( uint_fast16_t column_index = 0; column_index < columns; column_index++ ) {
+						// pointer to current column data
+						cd = std::get<1>( data[column_index] );
+						dc = cd->at( row );
+
+						// displaying data
+						if ( std::holds_alternative<int_fast64_t>( *dc ) )
+							std::cout << std::get<int_fast64_t>( *dc );
+						else if ( std::holds_alternative<long double>( *dc ) )
+							std::cout << std::get<long double>( *dc );
+						else
+							std::cout << "\"" << std::get<std::string>( *dc ) << "\"";
+						
+						if ( max_columns < columns - 1 ) std::cout << ", ";
+						max_columns++;
+					}
+					max_columns = 0;
+					std::cout << " ]," << std::endl;
+				}
+				std::cout << "}" << std::endl;
+			}
+			// inverted json (by columns) style
+			else if ( type == DISPLAY_TYPE::JSON_INVERTED ) {
+				uint_fast64_t max_rows = 0;
+				std::cout << "{" << std::endl;
+				for ( uint_fast16_t column_index = 0; column_index < data.size(); column_index++ ) {
+					std::cout << "    \"" << std::get<0>( data[column_index] ) << "\": [ ";
+					column_data* cd = std::get<1>( data[column_index] );
+					for ( cell_data* dc : *cd ) {
+						if ( std::holds_alternative<int_fast64_t>( *dc ) )
+							std::cout << std::get<int_fast64_t>( *dc );
+						else if ( std::holds_alternative<long double>( *dc ) )
+							std::cout << std::get<long double>( *dc );
+						else
+							std::cout << "\"" << std::get<std::string>( *dc ) << "\"";
+						if ( max_rows < rows - 1 ) std::cout << ", ";
+						max_rows++;
+					}
+					max_rows = 0;
+					std::cout << " ]," << std::endl;
+				}
+				std::cout << "}" << std::endl;
 			}
 		}
 		return rows;
 	}
 }
-
-/*
-	template<typename... Arguments>
-	uint_fast64_t [[deprecated]]table::add_full_row( Arguments... args ) {
-		// column index
-		column_data* cd;
-		uint_fast16_t index = 0;
-
-		for ( const auto& value : { args... } ) {
-			cd = std::get<1>( data[index] );
-			cd->push_back( args );
-			index++;
-		}
-
-		((
-			cd = std::get<1>( data[index] );
-			cd->push_back( args );
-			index++;
-		), ...);
-
-
-		return cd->size() - 1;
-	}
-*/

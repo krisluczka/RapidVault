@@ -472,7 +472,7 @@ namespace rv {
         }
     }
 
-    void database::rvquery( std::string query ) {
+    void database::rvquery( std::string query, DISPLAY_TYPE type ) {
         // reseting the query table
         delete operation_table;
         operation_table = new table;
@@ -520,6 +520,6 @@ namespace rv {
         }
 
         // showing results
-        operation_table->display();
+        operation_table->display( type );
     }
 }

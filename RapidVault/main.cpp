@@ -81,6 +81,12 @@ int main() {
 	t->change_row( 3, "id", 3 );
 	t->change_row( 3, "name", "Krakow" );
 
-	db.rvquery( "INSERT users \"Random\" \"User\" 2 -1.2;");
-	db.rvquery( "SELECT users; JOIN users.profession N1 id professions; WHERE users.name \"Krzysztof\" == professions.profession_name \"Spoon bender\" == ||" );
+	db.rvquery( "INSERT users \"Random\" \"User\" 2 -1.2;" );
+	db.rvquery( "SELECT users; JOIN users.profession N1 id professions; JOIN users.main_city N1 id cities; WHERE users.name \"Krzysztof\" == professions.profession_name \"Spoon bender\" == ||", rv::DISPLAY_TYPE::NORMAL );
+	std::cout << std::endl;
+	db.rvquery( "SELECT users; JOIN users.profession N1 id professions; JOIN users.main_city N1 id cities; WHERE users.name \"Krzysztof\" == professions.profession_name \"Spoon bender\" == ||", rv::DISPLAY_TYPE::RAW );
+	std::cout << std::endl;
+	db.rvquery( "SELECT users; JOIN users.profession N1 id professions; JOIN users.main_city N1 id cities; WHERE users.name \"Krzysztof\" == professions.profession_name \"Spoon bender\" == ||", rv::DISPLAY_TYPE::JSON );
+	std::cout << std::endl;
+	db.rvquery( "SELECT users; JOIN users.profession N1 id professions; JOIN users.main_city N1 id cities; WHERE users.name \"Krzysztof\" == professions.profession_name \"Spoon bender\" == ||", rv::DISPLAY_TYPE::JSON_INVERTED );
 }

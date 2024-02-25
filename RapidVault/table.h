@@ -12,6 +12,15 @@
 #define NULL16_INDEX 65535
 
 namespace rv {
+	// table displaying types
+	enum DISPLAY_TYPE {
+		NORMAL,
+		RAW,
+		JSON,
+		JSON_INVERTED,
+		NONE,
+	};
+
 	// Cell data
 	typedef std::variant<int_fast64_t, long double, std::string> cell_data;
 	// Column data
@@ -20,7 +29,6 @@ namespace rv {
 	typedef std::tuple<std::string, column_data*> column_whole;
 	// Table data set of columns
 	typedef std::vector<column_whole> table_data;
-	
 
 	class table {
 		friend class database;
@@ -67,9 +75,6 @@ namespace rv {
 					Rows manipulating
 				###############################
 			*/
-			template<typename... Arguments>
-			uint_fast64_t [[deprecated]]add_full_row( Arguments... );
-
 			/*
 				Creating a row (empty)
 				Returns its index
@@ -96,13 +101,7 @@ namespace rv {
 				Displays full table and it's values
 				Returns number of rows
 			*/
-			uint_fast64_t display() const;
-
-			/*
-				Displays raw table data
-				Returns number of rows
-			*/
-			uint_fast64_t display_raw() const;
+			uint_fast64_t display( DISPLAY_TYPE ) const;
 
 		private:			
 			/*
@@ -116,6 +115,3 @@ namespace rv {
 			table_data data;
 	};
 }
-
-//void [[deprecated]]test();
-//void [[nodiscard]]test();
