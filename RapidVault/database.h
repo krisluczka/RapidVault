@@ -16,8 +16,10 @@
 namespace rv {
 	class database {
 		public:
-			database( std::string );
-			database();
+			database( std::string database_name ) : name( database_name ), operation_table( nullptr ),
+				evaluation_format_error( false ), evaluation_division_warning( false ), evaluation_mixed_warning( false ) {};
+			database() : name( "rapidvault_database" ), operation_table( nullptr ), evaluation_format_error( false ),
+				evaluation_division_warning( false ), evaluation_mixed_warning( false ) {};
 			~database();
 
 
@@ -30,7 +32,14 @@ namespace rv {
 			/*
 				Displays a database structure
 			*/
-			void display();
+			void display() const;
+
+			/*
+				Renames a database
+			*/
+			inline void rename( std::string new_name ) {
+				name = new_name;
+			}
 
 			/*
 				###############################
@@ -39,16 +48,62 @@ namespace rv {
 			*/
 			/*
 				Creates a table
-				Returns its pointer
+				Returns its index
 			*/
-			table* create_table( std::string );
-			uint_fast64_t rename_table();
-			uint_fast64_t remove_table();
+			inline uint_fast64_t create_table( std::string name ) {
+				table* t( new table );
+				t->name = name;
+				tables.push_back( t );
+				return tables.size() - 1;
+			}
 
 			/*
-				Returns an index to given table with certain name
+				Renames specified table
+				Returns its index
 			*/
-			uint_fast64_t get_table_index( std::string ) const;
+			inline uint_fast64_t rename_table( uint_fast64_t identifier, std::string new_name ) {
+				if ( identifier < tables.size() ) {
+					tables[identifier]->name = new_name;
+					return identifier;
+				}
+				return NULL64_INDEX;
+			}
+
+			/*
+				Deletes specified table
+				Returns new amount of tables
+			*/
+			inline uint_fast64_t delete_table( uint_fast64_t identifier ) {
+				if ( identifier < tables.size() ) {
+					delete tables[identifier];
+					tables.erase( tables.begin() + identifier );
+					return identifier;
+				}
+				return NULL64_INDEX;
+			}
+
+			/*
+				Returns an index to specified table
+			*/
+			inline uint_fast64_t get_table_index( std::string identifier ) const {
+				for ( uint_fast64_t i( 0 ); i < this->tables.size(); ++i ) {
+					if ( tables[i]->name == identifier ) {
+						return i;
+						break;
+					}
+				}
+				return NULL64_INDEX;
+			}
+
+			/*
+				Returns a pointer to specified table
+			*/
+			inline table* get_table_pointer( uint_fast64_t identifier ) const {
+				if ( identifier < tables.size() )
+					return tables[identifier];
+				else
+					return nullptr;
+			}
 
 			/*
 				Default error handler for the queries
@@ -91,8 +146,8 @@ namespace rv {
 			bool evaluation_mixed_warning;
 
 			/*
-				Evaluates a cell_data operations
-				Returns a proper calculation
+				Calculates an cell_data value
+				Returns a proper cell_data
 			*/
 			cell_data evaluate_operator( cell_data*, cell_data*, std::string );
 

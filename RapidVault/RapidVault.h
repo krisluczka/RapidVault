@@ -22,6 +22,10 @@
 	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 	SOFTWARE.
 
+
+
+		https://github.com/krisluczka/RapidVault
+
 */
 #pragma once
 #include "database.h"

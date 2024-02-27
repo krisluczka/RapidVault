@@ -105,10 +105,10 @@
 
 namespace rv {
     cell_data database::evaluate_operator( cell_data* A, cell_data* B, std::string token ) {
-        long double a = 0, b = 0;
-        std::string as = "", bs = "";
-        bool a_string = false, b_string = false;
-        cell_data result = 0;
+        long double a( 0 ), b( 0 );
+        std::string as( "" ), bs( "" );
+        bool a_string( false ), b_string( false );
+        cell_data result( 0 );
 
         // getting the A
         if ( std::holds_alternative<int_fast64_t>( *A ) ) {
@@ -151,6 +151,11 @@ namespace rv {
             else if ( a_string && !b_string ) result = as.length() * b;
             else                              result = a * b;
         } else if ( token == "/" ) {
+            if ( a_string && b_string )       if ( bs.length() != 0 ) result = static_cast<int_fast64_t>(as.length() / bs.length()); else { evaluation_division_warning = true; return NAN; }
+            else if ( !a_string && b_string ) if ( bs.length() != 0 ) result = a / bs.length(); else { evaluation_division_warning = true; return NAN; }
+            else if ( a_string && !b_string ) if ( b != 0 ) result = as.length() / b; else { evaluation_division_warning = true; return NAN; }
+            else                              if ( b != 0 ) result = a / b; else { evaluation_division_warning = true; return NAN; }
+        } else if ( token == "%" ) {
             if ( a_string && b_string )       if ( bs.length() != 0 ) result = static_cast<int_fast64_t>(as.length() / bs.length()); else { evaluation_division_warning = true; return NAN; }
             else if ( !a_string && b_string ) if ( bs.length() != 0 ) result = a / bs.length(); else { evaluation_division_warning = true; return NAN; }
             else if ( a_string && !b_string ) if ( b != 0 ) result = as.length() / b; else { evaluation_division_warning = true; return NAN; }
@@ -205,14 +210,14 @@ namespace rv {
 
     bool database::evaluate_expression( std::vector<std::string*>& tokens, uint_fast64_t row ) {
         std::stack<cell_data*> values;
-        bool result = true;
+        bool result( true );
 
         //for ( std::string *token : tokens ) {
-        for ( uint_fast64_t i = 0; i < tokens.size(); i++ ) {
-            std::string* token = tokens[i];
+        for ( uint_fast64_t i( 0 ); i < tokens.size(); ++i ) {
+            std::string* token( tokens[i] );
             // checking if we're dealing with a number
             if ( isdigit( token->at(0) ) || (token->at(0) == '-' && isdigit(token->at(1))) ) {
-                cell_data* cd = new cell_data( stod( *token ) );
+                cell_data* cd( new cell_data( stod( *token ) ) );
                 values.push( cd );
             }
 
@@ -222,13 +227,13 @@ namespace rv {
                     evaluation_format_error = true;
                     return NAN;
                 }
-                cell_data *B = values.top();
+                cell_data* B( values.top() );
                 values.pop();
-                cell_data *A = values.top();
+                cell_data* A( values.top() );
                 values.pop();
 
                 // evaluating the operator
-                cell_data* value = new cell_data( evaluate_operator( A, B, *token ) );
+                cell_data* value( new cell_data( evaluate_operator( A, B, *token ) ) );
                 values.push( value );
 
                 // !!!
@@ -241,13 +246,13 @@ namespace rv {
                 if ( token->size() > 1 && token->front() == '\"' && token->back() == '\"' ) {
                     //token->pop_back();
                     //token->erase( 0, 1 );
-                    cell_data * value = new cell_data(token->substr( 1, token->size()-2 ));
+                    cell_data* value( new cell_data( token->substr( 1, token->size() - 2 ) ) );
                     values.push( value );
                 } else {
                     // checking if the column exists with given name exists
                     uint_fast16_t index = operation_table->get_column_index( *token );
                     if ( index != NULL16_INDEX ) {
-                        cell_data* value = new cell_data( operation_table->get_row( row, index ) );
+                        cell_data* value( new cell_data( operation_table->get_row( row, index ) ) );
                         values.push( value );
                     } else {
                         evaluation_format_error = true;
@@ -259,7 +264,7 @@ namespace rv {
 
         if ( values.size() != 1 ) {
             // !!!
-            for ( uint_fast64_t i = 0; i < values.size(); i++ ) {
+            for ( uint_fast64_t i( 0 ); i < values.size(); ++i ) {
                 delete values.top();
                 values.pop();
             }
@@ -276,7 +281,7 @@ namespace rv {
             result = std::get<long double>( *values.top() );
 
         // !!!
-        for ( uint_fast64_t i = 0; i < values.size(); i++ ) {
+        for ( uint_fast64_t i( 0 ); i < values.size(); ++i ) {
             delete values.top();
             values.pop();
         }
@@ -293,7 +298,7 @@ namespace rv {
                         // copy, if exists
                         *operation_table = *tables[index];
                         // renaming the columns to 'table.column'
-                        for ( uint_fast16_t i = 0; i < operation_table->data.size(); i++ ) {
+                        for ( uint_fast16_t i( 0 ); i < operation_table->data.size(); ++i ) {
                             std::get<0>( operation_table->data[i] ) = operation_table->name + '.' + std::get<0>(operation_table->data[i]);
                         }
                     } else check.push_error( ERROR_TYPE::INVALID_TABLE_NAME, "SELECT" );
@@ -303,24 +308,24 @@ namespace rv {
                     // checking whether the 'SELECT' occurred
                     if ( operation_table->data.size() ) {
                         // decoding the tokens
-                        uint_fast16_t main_column_index = operation_table->get_column_index( *tokens[1] );
-                        uint_fast16_t main_column_amount = operation_table->data.size();
-                        uint_fast64_t oti = get_table_index( *tokens[4] );
+                        uint_fast16_t main_column_index( operation_table->get_column_index( *tokens[1] ) );
+                        uint_fast16_t main_column_amount( operation_table->data.size() );
+                        uint_fast64_t oti( get_table_index( *tokens[4] ) );
                     
                         // if the table exists
                         if ( oti != NULL64_INDEX ) {
                             // further token decoding
-                            table* other_table = tables[oti];
-                            uint_fast16_t other_column_index = other_table->get_column_index( *tokens[3] );
-                            uint_fast16_t other_column_amount = other_table->data.size();
+                            table* other_table( tables[oti] );
+                            uint_fast16_t other_column_index( other_table->get_column_index( *tokens[3] ) );
+                            uint_fast16_t other_column_amount( other_table->data.size() );
                             // if the columns exist
                             if ( (main_column_index != NULL16_INDEX) && (other_column_index != NULL16_INDEX) ) {
                                 // table rows
-                                uint_fast64_t main_rows = std::get<1>( operation_table->data[0] )->size();
-                                uint_fast64_t other_rows = std::get<1>( other_table->data[0] )->size();
+                                uint_fast64_t main_rows( std::get<1>( operation_table->data[0] )->size() );
+                                uint_fast64_t other_rows( std::get<1>( other_table->data[0] )->size() );
                                 // pointer to any column data
-                                column_data* main_cd = nullptr;
-                                column_data* other_cd = nullptr;
+                                column_data* main_cd( nullptr );
+                                column_data* other_cd( nullptr );
 
                                 // many-to-one relation
                                 if ( *tokens[2] == "N1" ) {
@@ -328,19 +333,19 @@ namespace rv {
                                     main_cd = std::get<1>( operation_table->data[main_column_index] );
                                     other_cd = std::get<1>( other_table->data[other_column_index] );
                                     // merging two tables with new names
-                                    std::string column_name = "";
+                                    std::string column_name( "" );
                                     for ( column_whole cw : other_table->data ) {
                                         column_name = other_table->name + '.' + std::get<0>( cw );
                                         operation_table->create_column( column_name );
                                     }
 
                                     // checking the specified relation
-                                    for ( uint_fast64_t mrow = 0; mrow < main_rows; mrow++ ) {
-                                        for ( uint_fast64_t orow = 0; orow < other_rows; orow++ ) {
+                                    for ( uint_fast64_t mrow( 0 ); mrow < main_rows; ++mrow ) {
+                                        for ( uint_fast64_t orow( 0 ); orow < other_rows; ++orow ) {
                                             // if there is a match
                                             if ( *main_cd->at( mrow ) == *other_cd->at( orow ) ) {
                                                 // copy the values to the main table
-                                                for ( uint_fast16_t col = 0; col < other_column_amount; col++ ) {
+                                                for ( uint_fast16_t col( 0 ); col < other_column_amount; ++col ) {
                                                     main_cd = std::get<1>( operation_table->data[main_column_amount + col] );
                                                     other_cd = std::get<1>( other_table->data[col] );
                                                     *main_cd->at( mrow ) = *other_cd->at( orow );
@@ -363,7 +368,7 @@ namespace rv {
             } else if ( *tokens[0] == "ALIAS" ) {
                 if ( tokens.size() > 2 ) {
                     // renaming the column
-                    uint_fast16_t index = operation_table->get_column_index( *tokens[1] );
+                    uint_fast16_t index( operation_table->get_column_index( *tokens[1] ) );
                     operation_table->rename_column( index, *tokens[2] );
                 } else check.push_error( ERROR_TYPE::NOT_ENOUGH_ARGUMENTS, "ALIAS" );
             } else if ( *tokens[0] == "PICK" ) {
@@ -371,23 +376,23 @@ namespace rv {
                     // deleting the "PICK"
                     delete tokens[0];
                     tokens.erase( tokens.begin() );
-                    table* ot = new table;
+                    table* ot( new table );
 
                     // selecting the columns and pushing them to new table
-                    uint_fast16_t index = NULL16_INDEX;
+                    uint_fast16_t index( NULL16_INDEX );
                     for ( std::string* token : tokens ) {
                         index = operation_table->get_column_index( *token );
                         if ( index != NULL16_INDEX ) {
                             // 1.5 hours of trying to find a solution (alongside with table constructor)
-                            column_data *new_data = new column_data;
-                            std::string new_name = std::get<0>( operation_table->data[index] );
+                            column_data* new_data( new column_data );
+                            std::string new_name( std::get<0>( operation_table->data[index] ) );
                             
                             // deep copy
                             for ( cell_data* dc : *std::get<1>(operation_table->data[index]) ) {
                                 new_data->push_back( new cell_data( *dc ) );
                             }
 
-                            column_whole cw = std::make_tuple( new_name, new_data );
+                            column_whole cw( std::make_tuple( new_name, new_data ) );
                             ot->data.push_back( cw );
                         }
                     }
@@ -409,10 +414,10 @@ namespace rv {
                         delete tokens[0];
                         tokens.erase( tokens.begin() );
                         // the amount of rows based on the first column
-                        uint_fast64_t rows = std::get<1>( operation_table->data[0] )->size();
-                        bool evaluation = true;
+                        uint_fast64_t rows( std::get<1>( operation_table->data[0] )->size() );
+                        bool evaluation( true );
 
-                        for ( uint_fast64_t row = 0; row < rows; row++ ) {
+                        for ( uint_fast64_t row( 0 ); row < rows; ++row ) {
                             evaluation = evaluate_expression( tokens, row );
                             // invalid format error
                             if ( evaluation_format_error ) {
@@ -421,7 +426,7 @@ namespace rv {
                             }
                             // if row does not match the expressions, we erase it
                             if ( !evaluation ) {
-                                column_data* cd;
+                                column_data* cd( nullptr );
                                 for ( column_whole cw : operation_table->data ) {
                                     cd = std::get<1>( cw );
                                     delete cd->at( row );
@@ -443,13 +448,13 @@ namespace rv {
                 } else check.push_error( ERROR_TYPE::NOT_ENOUGH_ARGUMENTS, "WHERE" );
             } else if ( *tokens[0] == "INSERT" ) { // TO REWRITE LATER
                 if ( tokens.size() > 1 ) {
-                    uint_fast64_t index = get_table_index( *tokens[1] );
+                    uint_fast64_t index( get_table_index( *tokens[1] ) );
                     if ( index != NULL64_INDEX ) {
-                        table* t = tables[index];
+                        table* t( tables[index] );
                         // creating a new row and filling them with given parameters
-                        uint_fast64_t row = t->create_row();
+                        uint_fast64_t row( t->create_row() );
 
-                        for ( uint_fast16_t i = 0; i < t->data.size(); i++ ) {
+                        for ( uint_fast16_t i( 0 ); i < t->data.size(); ++i ) {
                             // if we moved too fast
                             if ( i + 2 >= tokens.size() ) break;
                             // converting given token to a number or string
@@ -500,7 +505,7 @@ namespace rv {
             while ( iss >> token ) {
                 // checking if it's a string separated by quotes
                 if (( token.front() == '\"' ) && (token.back() != '\"')) {
-                    std::string combined_token = token;
+                    std::string combined_token( token );
                     while ( iss >> token ) {
                         combined_token += " " + token;
                         if ( token.back() == '\"' ) break;

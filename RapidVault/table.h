@@ -33,8 +33,8 @@ namespace rv {
 	class table {
 		friend class database;
 		public:
-			table( std::string );
-			table();
+			table( std::string table_name ) : name( table_name ) {};
+			table() : name( "rapidvault_table" ) {};
 			table( const table& );
 			table& operator=( const table& );
 			~table();

@@ -15,7 +15,7 @@ namespace rv {
 	void error_handler::print_errors() {
 		if ( errors.size() ) std::cerr << "Query failed! " << errors.size() << " errors in total!\n";
 		else std::cerr << "Query run successfully.\n";
-		for ( uint_fast64_t i = 0; i < errors.size(); i++ ) {
+		for ( uint_fast64_t i( 0 ); i < errors.size(); ++i ) {
 			std::cerr << "    " << *errors_ids[i] << ": ";
 			switch ( errors[i] ) {
 				case ERROR_TYPE::INVALID_COLUMN_NAME:
@@ -47,7 +47,7 @@ namespace rv {
 	void error_handler::print_warnings() {
 		if ( warnings.size() ) std::cerr << warnings.size() << " warnings in total!\n";
 		else std::cerr << "No query warnings.\n";
-		for ( uint_fast64_t i = 0; i < warnings.size(); i++ ) {
+		for ( uint_fast64_t i( 0 ); i < warnings.size(); ++i ) {
 			std::cerr << "    " << *warnings_ids[i] << ": ";
 			switch ( warnings[i] ) {
 				case WARNING_TYPE::DIVISION_BY_ZERO:
