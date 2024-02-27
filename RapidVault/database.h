@@ -3,7 +3,6 @@
 */
 #pragma once
 #include <iostream>
-#include "table.h"
 #include <cstdlib>
 #include <variant>
 #include <vector>
@@ -11,6 +10,8 @@
 #include <sstream>
 #include <iomanip>
 #include <stack>
+#include "table.h"
+#include "error_handler.h"
 
 namespace rv {
 	class database {
@@ -50,6 +51,11 @@ namespace rv {
 			uint_fast64_t get_table_index( std::string ) const;
 
 			/*
+				Default error handler for the queries
+			*/
+			error_handler check;
+
+			/*
 				###############################
 					RVquery execution
 				###############################
@@ -78,6 +84,13 @@ namespace rv {
 			table* operation_table;
 
 			/*
+				Evaluation error flag
+			*/
+			bool evaluation_format_error;
+			bool evaluation_division_warning;
+			bool evaluation_mixed_warning;
+
+			/*
 				Evaluates a cell_data operations
 				Returns a proper calculation
 			*/
@@ -92,7 +105,7 @@ namespace rv {
 			/*
 				The heart of RVquery
 
-				Function evaluates the query based on the tokens
+				Evaluates the query based on the tokens
 			*/
 			void go_go_gadget_query( std::vector<std::string*>& );
 	};

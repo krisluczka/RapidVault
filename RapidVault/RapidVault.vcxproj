@@ -130,12 +130,14 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="database.cpp" />
+    <ClCompile Include="error_handler.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="rvquery.cpp" />
     <ClCompile Include="table.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="database.h" />
+    <ClInclude Include="error_handler.h" />
     <ClInclude Include="RapidVault.h" />
     <ClInclude Include="table.h" />
   </ItemGroup>

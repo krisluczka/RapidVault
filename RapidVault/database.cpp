@@ -4,11 +4,17 @@ namespace rv {
 	database::database( std::string database_name ) {
 		name = database_name;
 		operation_table = nullptr;
+		evaluation_format_error = false;
+		evaluation_division_warning = false;
+		evaluation_mixed_warning = false;
 	}
 
 	database::database() {
 		name = "rapidvault_database";
 		operation_table = nullptr;
+		evaluation_format_error = false;
+		evaluation_division_warning = false;
+		evaluation_mixed_warning = false;
 	}
 
 	database::~database() {

@@ -22,7 +22,8 @@
 		"table_name.column_name"
 	instead of simple "column_name".
 
-
+    RVquery returns an error whenever given instruction isn't compilable.
+    Warnings should be interpreted as errors that do not stop the query.
 
 		<command> - <description>
 			<example of use>
@@ -65,10 +66,13 @@
         with the same order as the columns are given
             INSERT users "Krzysztof" "Luczka";
 
-        DELETE - deletes currently selected rows
+        DELETE ROW <table> - deletes rows from specified table, that match those
+        selected in an operation table
+            DELETE ROW users
 
-        DELETE <table> - deletes specified table
-            DELETE test_table;
+        DELETE TABLE <table> - deletes whole specified table
+        (does not affect operation table)
+            DELETE TABLE test_table;
 
         UPDATE <column> <value> - updates the values of the selected rows in
         a given column
@@ -126,6 +130,10 @@ namespace rv {
             b_string = true;
         }
 
+        // warning handler (whenever we're comparing string to a number)
+        if ( a_string ^ b_string )
+            evaluation_mixed_warning = true;
+
         // checking every type of operator
         if ( token == "+" ) {
             if ( a_string && b_string )       result = as + bs;
@@ -143,10 +151,10 @@ namespace rv {
             else if ( a_string && !b_string ) result = as.length() * b;
             else                              result = a * b;
         } else if ( token == "/" ) {
-            if ( a_string && b_string )       if ( bs.length() != 0 ) result = static_cast<int_fast64_t>(as.length() / bs.length()); else return NAN;
-            else if ( !a_string && b_string ) if ( bs.length() != 0 ) result = a / bs.length(); else return NAN;
-            else if ( a_string && !b_string ) if ( b != 0 ) result = as.length() / b; else return NAN;
-            else                              if ( b != 0 ) result = a / b; else return NAN;
+            if ( a_string && b_string )       if ( bs.length() != 0 ) result = static_cast<int_fast64_t>(as.length() / bs.length()); else { evaluation_division_warning = true; return NAN; }
+            else if ( !a_string && b_string ) if ( bs.length() != 0 ) result = a / bs.length(); else { evaluation_division_warning = true; return NAN; }
+            else if ( a_string && !b_string ) if ( b != 0 ) result = as.length() / b; else { evaluation_division_warning = true; return NAN; }
+            else                              if ( b != 0 ) result = a / b; else { evaluation_division_warning = true; return NAN; }
         } else if ( token == "&&" ) {
             if ( a_string && b_string )       result = as.length() && bs.length();
             else if ( !a_string && b_string ) result = a && bs.length();
@@ -187,6 +195,9 @@ namespace rv {
             else if ( !a_string && b_string ) result = a != bs.length();
             else if ( a_string && !b_string ) result = as.length() != b;
             else                              result = a != b;
+        } else {
+            evaluation_format_error = true;
+            return NAN;
         }
 
         return result;
@@ -208,7 +219,7 @@ namespace rv {
             // checking if we're dealing with any operator
             else if ( isOperator( *token ) ) {
                 if ( values.size() < 2 ) {
-                    std::cerr << "ERR: Invalid expression format!" << std::endl;
+                    evaluation_format_error = true;
                     return NAN;
                 }
                 cell_data *B = values.top();
@@ -239,7 +250,7 @@ namespace rv {
                         cell_data* value = new cell_data( operation_table->get_row( row, index ) );
                         values.push( value );
                     } else {
-                        std::cerr << "ERR: Invalid column name!" << std::endl;
+                        evaluation_format_error = true;
                         return NAN;
                     }
                 }
@@ -247,12 +258,12 @@ namespace rv {
         }
 
         if ( values.size() != 1 ) {
-            std::cerr << "ERR: Invalid expression format!" << std::endl;
             // !!!
             for ( uint_fast64_t i = 0; i < values.size(); i++ ) {
                 delete values.top();
                 values.pop();
             }
+            evaluation_format_error = true;
             return NAN;
         }
         
@@ -285,12 +296,8 @@ namespace rv {
                         for ( uint_fast16_t i = 0; i < operation_table->data.size(); i++ ) {
                             std::get<0>( operation_table->data[i] ) = operation_table->name + '.' + std::get<0>(operation_table->data[i]);
                         }
-                    } else {
-                        std::cerr << "ERR: Invalid table name!" << std::endl;
-                    }
-                } else {
-                    std::cerr << "ERR: Not enough arguments!" << std::endl;
-                }
+                    } else check.push_error( ERROR_TYPE::INVALID_TABLE_NAME, "SELECT" );
+                } else check.push_error( ERROR_TYPE::NOT_ENOUGH_ARGUMENTS, "SELECT");
             } else if ( *tokens[0] == "JOIN" ) {
                 if ( tokens.size() > 4 ) {
                     // checking whether the 'SELECT' occurred
@@ -348,27 +355,17 @@ namespace rv {
                                     other_column_index += main_column_amount;
                                     operation_table->delete_column( other_column_index );
                                     operation_table->delete_column( main_column_index );
-                                }
-                            } else {
-                                std::cerr << "ERR: Invalid column name!" << std::endl;
-                            }
-                        } else {
-                            std::cerr << "ERR: Invalid table name!" << std::endl;
-                        }
-                    } else {
-                        std::cerr << "ERR: Didn't specify a starting table!" << std::endl;
-                    }
-                } else {
-                    std::cerr << "ERR: Not enough arguments!" << std::endl;
-                }
+                                } else check.push_error( ERROR_TYPE::INVALID_INSTRUCTION, *tokens[2] + " at JOIN");
+                            } else check.push_error( ERROR_TYPE::INVALID_COLUMN_NAME, "JOIN" );
+                        } else check.push_error( ERROR_TYPE::INVALID_TABLE_NAME, "JOIN" );
+                    } else check.push_error( ERROR_TYPE::NO_STARTING_TABLE, "JOIN" );
+                } else check.push_error( ERROR_TYPE::NOT_ENOUGH_ARGUMENTS, "JOIN" );
             } else if ( *tokens[0] == "ALIAS" ) {
                 if ( tokens.size() > 2 ) {
                     // renaming the column
                     uint_fast16_t index = operation_table->get_column_index( *tokens[1] );
                     operation_table->rename_column( index, *tokens[2] );
-                } else {
-                    std::cerr << "ERR: Not enough arguments!" << std::endl;
-                }
+                } else check.push_error( ERROR_TYPE::NOT_ENOUGH_ARGUMENTS, "ALIAS" );
             } else if ( *tokens[0] == "PICK" ) {
                 if ( tokens.size() > 1 ) {
                     // deleting the "PICK"
@@ -399,24 +396,31 @@ namespace rv {
                     *operation_table = *ot;
 
                     delete ot;
-                } else {
-                    std::cerr << "ERR: Not enough arguments!" << std::endl;
-                }
+                } else check.push_error( ERROR_TYPE::NOT_ENOUGH_ARGUMENTS, "PICK" );
             } else if ( *tokens[0] == "WHERE" ) {
                 if ( tokens.size() > 1 ) {
                     // checking whether the 'SELECT' occurred
                     if ( operation_table->data.size() ) {
+                        // resetting the flags
+                        evaluation_format_error = false;
+                        evaluation_division_warning = false;
+                        evaluation_mixed_warning = false;
                         // deleting the "WHERE"
                         delete tokens[0];
                         tokens.erase( tokens.begin() );
                         // the amount of rows based on the first column
                         uint_fast64_t rows = std::get<1>( operation_table->data[0] )->size();
-                        bool check = true;
+                        bool evaluation = true;
 
                         for ( uint_fast64_t row = 0; row < rows; row++ ) {
-                            check = evaluate_expression( tokens, row );
+                            evaluation = evaluate_expression( tokens, row );
+                            // invalid format error
+                            if ( evaluation_format_error ) {
+                                check.push_error( ERROR_TYPE::INVALID_EXPRESSION_FORMAT, "WHERE" );
+                                break;
+                            }
                             // if row does not match the expressions, we erase it
-                            if ( !check ) {
+                            if ( !evaluation ) {
                                 column_data* cd;
                                 for ( column_whole cw : operation_table->data ) {
                                     cd = std::get<1>( cw );
@@ -429,12 +433,14 @@ namespace rv {
                                 row--;
                             }
                         }
-                    } else {
-                        std::cerr << "ERR: Didn't specify a starting table!" << std::endl;
-                    }
-                } else {
-                    std::cerr << "ERR: Not enough arguments!" << std::endl;
-                }
+                        /*
+                            If it was checked while evaluating there would
+                            be the same amount of warnings as there are rows
+                        */
+                        if ( evaluation_division_warning ) check.push_warning( WARNING_TYPE::DIVISION_BY_ZERO, "WHERE" );
+                        if ( evaluation_mixed_warning ) check.push_warning( WARNING_TYPE::TYPES_MIXUP, "WHERE" );
+                    } else check.push_error( ERROR_TYPE::NO_STARTING_TABLE, "WHERE" );
+                } else check.push_error( ERROR_TYPE::NOT_ENOUGH_ARGUMENTS, "WHERE" );
             } else if ( *tokens[0] == "INSERT" ) { // TO REWRITE LATER
                 if ( tokens.size() > 1 ) {
                     uint_fast64_t index = get_table_index( *tokens[1] );
@@ -462,12 +468,12 @@ namespace rv {
                                 t->change_row( row, i, *tokens[i + 2] );
                             }
                         }
-                    } else {
-                        std::cerr << "ERR: Invalid table name!" << std::endl;
-                    }
-                } else {
-                    std::cerr << "ERR: Not enough arguments!" << std::endl;
-                }
+                    } else check.push_error( ERROR_TYPE::INVALID_TABLE_NAME, "INSERT" );
+                } else check.push_error( ERROR_TYPE::NOT_ENOUGH_ARGUMENTS, "INSERT" );
+            }
+            // invalid instruction
+            else {
+                check.push_error( ERROR_TYPE::INVALID_INSTRUCTION, *tokens[0] );
             }
         }
     }

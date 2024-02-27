@@ -81,7 +81,7 @@ int main() {
 	t->change_row( 3, "id", 3 );
 	t->change_row( 3, "name", "Krakow" );
 
-	db.rvquery( "INSERT users \"Random\" \"User\" 2 -1.2;" );
+	/*db.rvquery( "INSERT users \"Random\" \"User\" 2 -1.2;" );
 	db.rvquery( "SELECT users; JOIN users.profession N1 id professions; JOIN users.main_city N1 id cities; WHERE users.name \"Krzysztof\" == professions.profession_name \"Spoon bender\" == ||", rv::DISPLAY_TYPE::NORMAL );
 	std::cout << std::endl;
 	db.rvquery( "SELECT users; JOIN users.profession N1 id professions; JOIN users.main_city N1 id cities; WHERE users.name \"Krzysztof\" == professions.profession_name \"Spoon bender\" == ||", rv::DISPLAY_TYPE::RAW );
@@ -89,4 +89,10 @@ int main() {
 	db.rvquery( "SELECT users; JOIN users.profession N1 id professions; JOIN users.main_city N1 id cities; WHERE users.name \"Krzysztof\" == professions.profession_name \"Spoon bender\" == ||", rv::DISPLAY_TYPE::JSON );
 	std::cout << std::endl;
 	db.rvquery( "SELECT users; JOIN users.profession N1 id professions; JOIN users.main_city N1 id cities; WHERE users.name \"Krzysztof\" == professions.profession_name \"Spoon bender\" == ||", rv::DISPLAY_TYPE::JSON_INVERTED );
+	*/
+
+	// ultimate error generator
+	db.rvquery( "JOIN users.profession N1 id professions; SELECT users; JOIN u.p N1 id professions; JOIN users.profession J id professions; ALIAS; QWERTY; INSERT user \"test\"; WHERE users.surname users.name; WHERE users.main_city users.profession /; WHERE users.surname users.profession >=;" );
+	db.check.print_errors();
+	db.check.print_warnings();
 }

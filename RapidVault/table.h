@@ -13,7 +13,7 @@
 
 namespace rv {
 	// table displaying types
-	enum DISPLAY_TYPE {
+	enum DISPLAY_TYPE : uint_fast8_t {
 		NORMAL,
 		RAW,
 		JSON,
@@ -47,7 +47,7 @@ namespace rv {
 				###############################
 			*/
 			/*
-				Creating a new column of specified type and name
+				Creates a new column of specified type and name
 				Returns its index
 			*/
 			uint_fast16_t create_column( std::string, uint_fast16_t index = NULL16_INDEX );
@@ -76,13 +76,13 @@ namespace rv {
 				###############################
 			*/
 			/*
-				Creating a row (empty)
+				Creates a row (empty)
 				Returns its index
 			*/
 			uint_fast64_t create_row();
 
 			/*
-				Changing values of given row
+				Changes values of given row
 			*/
 			void change_row( uint_fast64_t, uint_fast16_t, cell_data );
 			void change_row( uint_fast64_t, std::string, cell_data );
