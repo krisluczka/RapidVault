@@ -1,4 +1,4 @@
-<img src="https://github.com/krisluczka/RapidVault/blob/master/rv_2024_logo_white.png" width="100px"/>
+<img src="https://github.com/krisluczka/RapidVault/blob/master/rv_2024_logo_white.png" height="100px"/>
 
 ## Relational database management system written in modern C++
 
