@@ -23,10 +23,14 @@ int main() {
 	db.rvquery( "INSERT cities 1 \"Warszawa\";" );
 	db.rvquery( "INSERT cities 2 \"Gdansk\";" );
 	db.rvquery( "INSERT cities 3 \"Krakow\";" );
-	
-	db.rvquery( "SELECT users;" );
-	db.rvquery( "SELECT professions;" );
-	db.rvquery( "SELECT cities;" );
+
+	db.rvquery( "SELECT cities; PUSH 4;" );
+	db.rvquery( "SELECT cities; PUSH 4 \"Lodz\";" );
+	db.rvquery( "SELECT cities; PUSH 4 \"Lodz\" 10;");
+
+	db.rvquery( "INSERT cities 4; SELECT cities;" );
+	db.rvquery( "INSERT cities 4 \"Lodz\"; SELECT cities;" );
+	db.rvquery( "INSERT cities 4 \"Lodz\" 10; SELECT cities;" );
 	
 	// ultimate error generator
 	/*db.rvquery( "JOIN users.profession N1 id professions; SELECT users; JOIN u.p N1 id professions; JOIN users.profession J id professions; ALIAS; QWERTY; INSERT user \"test\"; WHERE users.surname users.name; WHERE users.main_city users.profession /; WHERE users.surname users.profession >=;" );

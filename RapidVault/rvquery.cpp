@@ -55,12 +55,12 @@
 		! WARNING ! Expressions use Reverse Polish Notation
 			WHERE main.age users.age > main.experience users.experience > &&;\
 
-        PUSH <value> <value> ... - inserts a row to the operation table
+        *PUSH <value> <value> ... - inserts a row to the operation table
             PUSH "Krzysztof" "Luczka" 18;
 
 
 
-	>	Manipulating queries    <
+	>	Manipulating queries    < (they don't use or affect the operation table)
 
 		INSERT <table> <value> <value> ... - inserts a new row to a specified table,
         with the same order as the columns are given
@@ -72,40 +72,34 @@
         CREATE COLUMNS <table> <column> - creates new columns in a specified table
             CREATE COLUMN streets name length;
 
-        DELETE ROWS <table> - deletes rows from specified table, that match those
-        selected in an operation table
-            DELETE ROW users;
+        *DELETE ROWS <table> WHERE <expression> - deletes rows from given table that
+        match the expression
+            DELETE ROWS users;
 
-        DELETE TABLE <table> - deletes whole specified table
-        (does not affect operation table)
+        *DELETE TABLE <table> - deletes whole specified table
             DELETE TABLE test_table;
-
-        UPDATE <column> <value> - updates the values of the selected rows in
-        a given column
-			UPDATE users.age 18;
 
 
 
     >   Keywords    <
         
-        DISTINCT <column> - selects only distinct rows by given column
+        *DISTINCT <column> - selects only distinct rows by given column
             DISTINCT users.id;
 
-        ASCENDING/DESCENDING <column> - sorts ascending or descending relative
+        *ASCENDING/DESCENDING <column> - sorts ascending or descending relative
         to the selected column
             ASCENDING users.age;
 
-        SUM <column> <column> ... - sums given columns
+        *SUM <column> - sums given columns
             SUM users.money users.debt;
 
-        AVG <column> <column> ... - averages given columns
+        *AVG <column> - averages given columns
             AVG users.age;
 
-        MIN/MAX <column> - selects the row with the smallest/largest value in
+        *MIN/MAX <column> - selects the row with the smallest/largest value in
         the specified column
             MAX users.debt;
 
-    >   WHERE expressions   <
 */
 #include "database.h"
 #define isOperator(token) (token == "+" || token == "-" || token == "*" || token == "/" || token == "&&" || token == "||" || token == "<" || token == "<=" || token == ">" || token == ">=" || token == "==" || token == "!=" )
@@ -351,13 +345,15 @@ namespace rv {
         const uint_fast64_t tokens_size( tokens.size() );
         // ignoring empty lines
         if ( tokens_size ) {
-            if ( *tokens[0] == "SELECT" )       SELECT_query( tokens, tokens_size );
-            else if ( *tokens[0] == "JOIN" )    JOIN_query( tokens, tokens_size );
-            else if ( *tokens[0] == "ALIAS" )   ALIAS_query( tokens, tokens_size );
-            else if ( *tokens[0] == "PICK" )    PICK_query( tokens, tokens_size );
-            else if ( *tokens[0] == "WHERE" )   WHERE_query( tokens, tokens_size );
-            else if ( *tokens[0] == "INSERT" )  INSERT_query( tokens, tokens_size );
-            else if ( *tokens[0] == "CREATE" )  CREATE_query( tokens, tokens_size );
+            if ( *tokens[0] == "SELECT" )           SELECT_query( tokens, tokens_size );
+            else if ( *tokens[0] == "JOIN" )        JOIN_query( tokens, tokens_size );
+            else if ( *tokens[0] == "ALIAS" )       ALIAS_query( tokens, tokens_size );
+            else if ( *tokens[0] == "PICK" )        PICK_query( tokens, tokens_size );
+            else if ( *tokens[0] == "WHERE" )       WHERE_query( tokens, tokens_size );
+            else if ( *tokens[0] == "PUSH" )        PUSH_query( tokens, tokens_size );
+            else if ( *tokens[0] == "INSERT" )      INSERT_query( tokens, tokens_size );
+            else if ( *tokens[0] == "CREATE" )      CREATE_query( tokens, tokens_size );
+            else if ( *tokens[0] == "DISTINCT" )    DISTINCT_query( tokens, tokens_size );
             // invalid instruction
             else check.push_error( ERROR_TYPE::INVALID_INSTRUCTION, *tokens[0] );
         }
@@ -479,6 +475,13 @@ namespace rv {
             *operation_table = *ot;
 
             delete ot;
+            /*
+                // i need to check whether this would be faster
+                // if you want to contribute benchmark this pls <3
+
+                delete operation_table;
+                operation_table = ot;
+            */
         } else check.push_error( ERROR_TYPE::NOT_ENOUGH_ARGUMENTS, "PICK" );
     }
 
@@ -528,9 +531,47 @@ namespace rv {
         } else check.push_error( ERROR_TYPE::NOT_ENOUGH_ARGUMENTS, "WHERE" );
     }
 
+    // to rewrite later
+    void database::PUSH_query( std::vector <std::string*>& tokens, const uint_fast64_t tokens_size ) {
+        if ( tokens_size > 1 ) {
+            // deleting the "PUSH"
+            delete tokens[0];
+            tokens.erase( tokens.begin() );
+
+            // code stolen from INSERT
+            // creating a new row and filling them with given parameters
+            uint_fast64_t row( operation_table->create_row() );
+            for ( uint_fast64_t i( 0 ); i < operation_table->data.size(); ++i ) {
+                // if we moved too fast
+                if ( i >= tokens_size - 1 ) break;
+                // converting given token to a number or string
+                std::istringstream iss( *tokens[i] );
+                int_fast64_t data_int;
+                long double data_float;
+                // i didn't come up with better solution (to do for later)
+                if ( iss >> data_float && (iss.clear(), iss.seekg( 0 ), iss >> data_int) ) {
+                    if ( data_float == data_int ) {
+                        operation_table->change_row( row, i, data_int );
+                    } else {
+                        operation_table->change_row( row, i, data_float );
+                    }
+                } else {
+                    *tokens[i] = tokens[i]->substr( 1, tokens[i]->length() - 2 );
+                    operation_table->change_row( row, i, *tokens[i] );
+                }
+            }
+        } else check.push_error( ERROR_TYPE::NOT_ENOUGH_ARGUMENTS, "PUSH" );
+    }
+
+    // to rewrite later
     void database::INSERT_query( std::vector<std::string*>& tokens, const uint_fast64_t tokens_size ) {
         if ( tokens_size > 1 ) {
             uint_fast64_t index( get_table_index( *tokens[1] ) );
+            // deleting the "INSERT" and the table name
+            delete tokens[0];
+            delete tokens[1];
+            tokens.erase( tokens.begin() );
+            tokens.erase( tokens.begin() );
             if ( index != NULL64_INDEX ) {
                 table* t( tables[index] );
                 // creating a new row and filling them with given parameters
@@ -538,9 +579,9 @@ namespace rv {
 
                 for ( uint_fast64_t i( 0 ); i < t->data.size(); ++i ) {
                     // if we moved too fast
-                    if ( i + 2 >= tokens_size ) break;
+                    if ( i >= tokens_size - 2 ) break;
                     // converting given token to a number or string
-                    std::istringstream iss( *tokens[i + 2] );
+                    std::istringstream iss( *tokens[i] );
                     int_fast64_t data_int;
                     long double data_float;
                     // i didn't come up with better solution (to do for later)
@@ -551,8 +592,8 @@ namespace rv {
                             t->change_row( row, i, data_float );
                         }
                     } else {
-                        *tokens[i + 2] = tokens[i + 2]->substr( 1, tokens[i + 2]->length() - 2 );
-                        t->change_row( row, i, *tokens[i + 2] );
+                        *tokens[i] = tokens[i]->substr( 1, tokens[i]->length() - 2 );
+                        t->change_row( row, i, *tokens[i] );
                     }
                 }
             } else check.push_error( ERROR_TYPE::INVALID_TABLE_NAME, "INSERT" );
@@ -583,5 +624,31 @@ namespace rv {
                 } else check.push_error( ERROR_TYPE::NOT_ENOUGH_ARGUMENTS, "CREATE" );
             } else check.push_error( ERROR_TYPE::INVALID_INSTRUCTION, *tokens[1] + " at CREATE" );
         } else check.push_error( ERROR_TYPE::NOT_ENOUGH_ARGUMENTS, "CREATE" );
+    }
+
+    void database::DISTINCT_query( std::vector<std::string*>& tokens, const uint_fast64_t tokens_size ) {
+        // damn this code is vile and probably slow
+        if ( tokens_size > 1 ) {
+            table* ot( new table );
+            column_data* cd;
+
+            // copying the table structure
+            for ( column_whole cw : operation_table->data ) {
+                cd = new column_data;
+                ot->data.push_back( std::tuple( name, cd ) );
+            }
+
+            // get the column values
+
+            // make std::pair with their indices
+
+            // sort the vector
+
+            // std::unique
+
+            // push the unique rows to new table
+
+            // swap them
+        } else check.push_error( ERROR_TYPE::NOT_ENOUGH_ARGUMENTS, "DISTINCT" );
     }
 }

@@ -2,14 +2,14 @@
 
 ## Relational database management system written in modern C++
 
-This projects aim to create a strong alternative to the currently used databases systems.
+This project aims to create a strong alternative to the currently used databases systems.
 The main goals to achieve are:
 * Abandoning the SQL for a new query language.
 * Switching from statically typed columns to dynamically typed.
 * A departure from the current requirement to define relationships.
 
 ## Documentation
-The documentation will use:
+Future documentation will include:
 * project usage (along with discussing the classes structure and others),
 * tutorial on how to port the code to own projects,
 * database specifications,

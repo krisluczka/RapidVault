@@ -10,6 +10,7 @@
 #include <sstream>
 #include <iomanip>
 #include <stack>
+#include <algorithm>
 #include "table.h"
 #include "error_handler.h"
 
@@ -172,7 +173,11 @@ namespace rv {
 			void ALIAS_query( std::vector<std::string*>&, const uint_fast64_t );
 			void PICK_query( std::vector<std::string*>&, const uint_fast64_t );
 			void WHERE_query( std::vector<std::string*>&, const uint_fast64_t );
+			void PUSH_query( std::vector <std::string*>&, const uint_fast64_t );
+
 			void INSERT_query( std::vector<std::string*>&, const uint_fast64_t );
 			void CREATE_query( std::vector<std::string*>&, const uint_fast64_t );
+			
+			void DISTINCT_query( std::vector<std::string*>&, const uint_fast64_t );
 	};
 }

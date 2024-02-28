@@ -107,11 +107,11 @@ namespace rv {
 		}
 
 		column_data* column( new column_data );
-		cell_data* cd;
+		cell_data* dc;
 		// creating the empty cells
 		for ( uint_fast64_t i( 0 ); i < rows; ++i ) {
-			cd = new cell_data;
-			column->push_back( cd );
+			dc = new cell_data;
+			column->push_back( dc );
 		}
 
 		if ( index == NULL64_INDEX ) {
@@ -129,8 +129,8 @@ namespace rv {
 		if ( identifier < data.size() ) {
 			// don't forget about this!
 			column_data* cd( std::get<1>( data[identifier] ) );
-			for ( cell_data* data : *cd ) {
-				delete data;
+			for ( cell_data* dc : *cd ) {
+				delete dc;
 			}
 			delete cd;
 			data.erase( data.begin() + identifier );
@@ -208,13 +208,34 @@ namespace rv {
 			column_data* cd( std::get<1>( data[0] ) );
 			uint_fast64_t rows( cd->size() );
 			// checking the row identifier (only when the row exists)
-			if ( identifier < data.size() ) {
+			if ( identifier < data.size() && index < rows ) {
 				cd = std::get<1>( data[identifier] );
 				d = *cd->at( index );
 			}
 		}
 
 		return d;
+	}
+
+	uint_fast64_t table::delete_row( uint_fast64_t index ) {
+		uint_fast64_t rows( NULL64_INDEX );
+		if ( data.size() ) {
+			// checking the amount of rows (based on first column)
+			column_data* cd( std::get<1>( data[0] ) );
+			rows = cd->size();
+			// removing specified row
+			if ( index < rows ) {
+				cell_data* dc;
+				for ( column_whole cw : data ) {
+					cd = std::get<1>( data[0] );
+					dc = cd->at( index );
+					delete dc;
+					cd->erase( cd->begin() + index );
+				}
+				--rows;
+			}
+		}
+		return rows;
 	}
 
 	uint_fast64_t table::display( DISPLAY_TYPE type ) const {

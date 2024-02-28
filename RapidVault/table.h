@@ -68,6 +68,17 @@ namespace rv {
 			*/
 			uint_fast64_t get_column_index( std::string ) const;
 
+			/*
+				Copies column structure from another table
+				(can be used only on an empty table!)
+			*/
+			inline void copy_structure( table* copy ) {
+				for ( column_whole cw : copy->data ) {
+					create_column( std::get<0>( cw ) );
+				}
+			}
+
+
 
 			/*
 				###############################
@@ -90,6 +101,12 @@ namespace rv {
 				Returns a row value
 			*/
 			cell_data get_row( uint_fast64_t, uint_fast64_t );
+
+			/*
+				Deletes a row
+				Returns new amount of rows
+			*/
+			uint_fast64_t delete_row( uint_fast64_t );
 
 			/*
 				###############################
