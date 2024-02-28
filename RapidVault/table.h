@@ -9,7 +9,6 @@
 #include <sstream>
 #include <iomanip>
 #define NULL64_INDEX 18446744073709551615
-#define NULL16_INDEX 65535
 
 namespace rv {
 	// table displaying types
@@ -50,24 +49,24 @@ namespace rv {
 				Creates a new column of specified type and name
 				Returns its index
 			*/
-			uint_fast16_t create_column( std::string, uint_fast16_t index = NULL16_INDEX );
+			uint_fast64_t create_column( std::string, uint_fast64_t index = NULL64_INDEX );
 
 			/*
 				Deletes specified column
 				Returns new amount of columns
 			*/
-			uint_fast16_t delete_column( uint_fast16_t );
+			uint_fast64_t delete_column( uint_fast64_t );
 
 			/*
 				Renames specified column
 				Returns its index
 			*/
-			uint_fast16_t rename_column( uint_fast16_t, std::string );
+			uint_fast64_t rename_column( uint_fast64_t, std::string );
 
 			/*
 				Returns column's index
 			*/
-			uint_fast16_t get_column_index( std::string ) const;
+			uint_fast64_t get_column_index( std::string ) const;
 
 
 			/*
@@ -84,13 +83,13 @@ namespace rv {
 			/*
 				Changes values of given row
 			*/
-			void change_row( uint_fast64_t, uint_fast16_t, cell_data );
+			void change_row( uint_fast64_t, uint_fast64_t, cell_data );
 			void change_row( uint_fast64_t, std::string, cell_data );
 
 			/*
 				Returns a row value
 			*/
-			cell_data get_row( uint_fast64_t, uint_fast16_t );
+			cell_data get_row( uint_fast64_t, uint_fast64_t );
 
 			/*
 				###############################

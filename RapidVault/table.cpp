@@ -83,7 +83,7 @@ namespace rv {
 	table::~table() {
 		column_data* cd( nullptr );
 		cell_data* dc( nullptr );
-		for ( uint_fast16_t i( 0 ); i < data.size(); ++i ) {
+		for ( uint_fast64_t i( 0 ); i < data.size(); ++i ) {
 			cd = std::get<1>( data[i] );
 			for ( uint_fast64_t j( 0 ); j < cd->size(); ++j ) {
 				dc = cd->at( j );
@@ -93,7 +93,7 @@ namespace rv {
 		}
 	}
 
-	uint_fast16_t table::create_column( std::string name, uint_fast16_t index ) {
+	uint_fast64_t table::create_column( std::string name, uint_fast64_t index ) {
 		/*
 			We need to check how many empty cells we need to create.
 			Whenever we're creating a new column to a table with
@@ -114,7 +114,7 @@ namespace rv {
 			column->push_back( cd );
 		}
 
-		if ( index == NULL16_INDEX ) {
+		if ( index == NULL64_INDEX ) {
 			// inserting at the back
 			data.push_back( std::tuple( name, column ) );
 			return 0;
@@ -125,7 +125,7 @@ namespace rv {
 		}
 	}
 
-	uint_fast16_t table::delete_column( uint_fast16_t identifier ) {
+	uint_fast64_t table::delete_column( uint_fast64_t identifier ) {
 		if ( identifier < data.size() ) {
 			// don't forget about this!
 			column_data* cd( std::get<1>( data[identifier] ) );
@@ -137,24 +137,24 @@ namespace rv {
 			return identifier;
 		}
 
-		return NULL16_INDEX;
+		return NULL64_INDEX;
 	}
 
-	uint_fast16_t table::rename_column( uint_fast16_t identifier, std::string new_name ) {
+	uint_fast64_t table::rename_column( uint_fast64_t identifier, std::string new_name ) {
 		if ( identifier < data.size() )
 			std::get<0>( data[identifier] ) = new_name;
 
 		return identifier;
 	}
 
-	uint_fast16_t table::get_column_index( std::string name ) const {
-		for ( uint_fast16_t i( 0 ); i < data.size(); ++i ) {
+	uint_fast64_t table::get_column_index( std::string name ) const {
+		for ( uint_fast64_t i( 0 ); i < data.size(); ++i ) {
 			if ( std::get<0>( data[i] ) == name ) {
 				return i;
 				break;
 			}
 		}
-		return NULL16_INDEX;
+		return NULL64_INDEX;
 	}
 
 	uint_fast64_t table::create_row() {
@@ -162,7 +162,7 @@ namespace rv {
 			column_data* cd( std::get<1>( data[0] ) );
 			cell_data* dc( nullptr );
 			// filling row with zeroes
-			for ( uint_fast16_t column_index( 0 ); column_index < data.size(); ++column_index ) {
+			for ( uint_fast64_t column_index( 0 ); column_index < data.size(); ++column_index ) {
 				cd = std::get<1>( data[column_index] );
 				dc = new cell_data( 0 );
 				cd->push_back( dc );
@@ -172,7 +172,7 @@ namespace rv {
 		} else return NULL64_INDEX;
 	}
 
-	void table::change_row( uint_fast64_t index, uint_fast16_t identifier, cell_data d ) {
+	void table::change_row( uint_fast64_t index, uint_fast64_t identifier, cell_data d ) {
 		if ( data.size() ) {
 			// checking the amount of rows (based on first column)
 			column_data* cd( std::get<1>( data[0] ) );
@@ -187,7 +187,7 @@ namespace rv {
 	}
 
 	void table::change_row( uint_fast64_t index, std::string identifier, cell_data d ) {
-		uint_fast16_t identi( get_column_index( identifier ) );
+		uint_fast64_t identi( get_column_index( identifier ) );
 		if ( data.size() ) {
 			// checking the amount of rows (based on first column)
 			column_data* cd( std::get<1>( data[0] ) );
@@ -201,7 +201,7 @@ namespace rv {
 		}
 	}
 
-	cell_data table::get_row( uint_fast64_t index, uint_fast16_t identifier ) {
+	cell_data table::get_row( uint_fast64_t index, uint_fast64_t identifier ) {
 		cell_data d( 0 );
 		if ( data.size() ) {
 			// checking the amount of rows (based on first column)
@@ -230,7 +230,7 @@ namespace rv {
 				std::stringstream parser;
 				std::string string_parser( "" );
 
-				for ( uint_fast16_t column_index( 0 ); column_index < data.size(); ++column_index ) {
+				for ( uint_fast64_t column_index( 0 ); column_index < data.size(); ++column_index ) {
 					// checking whether the column's name is the longest
 					string_parser = std::get<0>( data[column_index] );
 					column_width[column_index] = std::max( column_width[column_index], string_parser.length() );
@@ -255,7 +255,7 @@ namespace rv {
 					std::cout << std::string( column_width[cw] + 2, '-' ) << 'o';
 				}
 				std::cout << "\n|";
-				for ( uint_fast16_t column_index( 0 ); column_index < data.size(); ++column_index ) {
+				for ( uint_fast64_t column_index( 0 ); column_index < data.size(); ++column_index ) {
 					string_parser = std::get<0>( data[column_index] );
 					std::cout << " " << std::left << std::setw( column_width[column_index] ) << string_parser << " |";
 				}
@@ -269,7 +269,7 @@ namespace rv {
 				std::cout << "\n";
 				for ( uint_fast64_t row( 0 ); row < rows; ++row ) {
 					std::cout << "|";
-					for ( uint_fast16_t column_index( 0 ); column_index < data.size(); ++column_index ) {
+					for ( uint_fast64_t column_index( 0 ); column_index < data.size(); ++column_index ) {
 						// pointer to current column data
 						cd = std::get<1>( data[column_index] );
 
@@ -288,7 +288,7 @@ namespace rv {
 			// raw style
 			else if ( type == DISPLAY_TYPE::RAW ) {
 				for ( uint_fast64_t row( 0 ); row < rows; ++row ) {
-					for ( uint_fast16_t column_index( 0 ); column_index < data.size(); ++column_index ) {
+					for ( uint_fast64_t column_index( 0 ); column_index < data.size(); ++column_index ) {
 						// pointer to current column data
 						cd = std::get<1>( data[column_index] );
 
@@ -304,12 +304,12 @@ namespace rv {
 			// json (by rows) style
 			else if ( type == DISPLAY_TYPE::JSON ) {
 				cell_data* dc( nullptr );
-				uint_fast16_t columns( data.size() );
-				uint_fast16_t max_columns( 0 );
+				uint_fast64_t columns( data.size() );
+				uint_fast64_t max_columns( 0 );
 				std::cout << "{\n";
 				for ( uint_fast64_t row( 0 ); row < rows; ++row ) {
 					std::cout << "    " << row << ": [ ";
-					for ( uint_fast16_t column_index( 0 ); column_index < columns; ++column_index ) {
+					for ( uint_fast64_t column_index( 0 ); column_index < columns; ++column_index ) {
 						// pointer to current column data
 						cd = std::get<1>( data[column_index] );
 						dc = cd->at( row );
@@ -334,7 +334,7 @@ namespace rv {
 			else if ( type == DISPLAY_TYPE::JSON_INVERTED ) {
 				uint_fast64_t max_rows( 0 );
 				std::cout << "{\n";
-				for ( uint_fast16_t column_index( 0 ); column_index < data.size(); ++column_index ) {
+				for ( uint_fast64_t column_index( 0 ); column_index < data.size(); ++column_index ) {
 					std::cout << "    \"" << std::get<0>( data[column_index] ) << "\": [ ";
 					cd = std::get<1>( data[column_index] );
 					for ( cell_data* dc : *cd ) {

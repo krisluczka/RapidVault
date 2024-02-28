@@ -9,7 +9,7 @@ namespace rv {
 	}
 
 	void database::display() const {
-		uint_fast16_t table_amount( tables.size() );
+		uint_fast64_t table_amount( tables.size() );
 		uint_fast64_t row_amount( 0 );
 		std::cout << " # " << name << " ( " << table_amount << " tables in total )\n";
 		for ( table* t : tables ) {

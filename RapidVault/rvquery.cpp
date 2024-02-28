@@ -257,8 +257,8 @@ namespace rv {
                     values.push( value );
                 } else {
                     // checking if the column exists with given name exists
-                    uint_fast16_t index( operation_table->get_column_index( *token ) );
-                    if ( index != NULL16_INDEX ) {
+                    uint_fast64_t index( operation_table->get_column_index( *token ) );
+                    if ( index != NULL64_INDEX ) {
                         cell_data* value( new cell_data( operation_table->get_row( row, index ) ) );
                         values.push( value );
                     } else {
@@ -294,225 +294,6 @@ namespace rv {
         }
 
         return result;
-    }
-
-    void database::go_go_gadget_query( std::vector<std::string*>& tokens ) {
-        const uint_fast64_t tokens_size( tokens.size() );
-        if ( tokens_size ) { // ignoring empty lines
-            if ( *tokens[0] == "SELECT" ) {
-                if ( tokens_size > 1 ) {
-                    uint_fast64_t index( get_table_index( *tokens[1] ) );
-                    if ( index != NULL64_INDEX ) {
-                        // copy, if exists
-                        *operation_table = *tables[index];
-                        // renaming the columns to 'table.column'
-                        for ( uint_fast16_t i( 0 ); i < operation_table->data.size(); ++i ) {
-                            std::get<0>( operation_table->data[i] ) = operation_table->name + '.' + std::get<0>(operation_table->data[i]);
-                        }
-                    } else check.push_error( ERROR_TYPE::INVALID_TABLE_NAME, "SELECT" );
-                } else check.push_error( ERROR_TYPE::NOT_ENOUGH_ARGUMENTS, "SELECT");
-            } else if ( *tokens[0] == "JOIN" ) {
-                if ( tokens_size > 4 ) {
-                    // checking whether the 'SELECT' occurred
-                    if ( operation_table->data.size() ) {
-                        // decoding the tokens
-                        uint_fast16_t main_column_index( operation_table->get_column_index( *tokens[1] ) );
-                        uint_fast16_t main_column_amount( operation_table->data.size() );
-                        uint_fast64_t oti( get_table_index( *tokens[4] ) );
-                    
-                        // if the table exists
-                        if ( oti != NULL64_INDEX ) {
-                            // further token decoding
-                            table* other_table( tables[oti] );
-                            uint_fast16_t other_column_index( other_table->get_column_index( *tokens[3] ) );
-                            uint_fast16_t other_column_amount( other_table->data.size() );
-                            // if the columns exist
-                            if ( (main_column_index != NULL16_INDEX) && (other_column_index != NULL16_INDEX) ) {
-                                // table rows
-                                uint_fast64_t main_rows( std::get<1>( operation_table->data[0] )->size() );
-                                uint_fast64_t other_rows( std::get<1>( other_table->data[0] )->size() );
-                                // pointer to any column data
-                                column_data* main_cd( nullptr );
-                                column_data* other_cd( nullptr );
-
-                                // many-to-one relation
-                                if ( *tokens[2] == "N1" ) {
-                                    // operation table column data
-                                    main_cd = std::get<1>( operation_table->data[main_column_index] );
-                                    other_cd = std::get<1>( other_table->data[other_column_index] );
-                                    // merging two tables with new names
-                                    std::string column_name( "" );
-                                    for ( column_whole cw : other_table->data ) {
-                                        column_name = other_table->name + '.' + std::get<0>( cw );
-                                        operation_table->create_column( column_name );
-                                    }
-
-                                    // checking the specified relation
-                                    for ( uint_fast64_t mrow( 0 ); mrow < main_rows; ++mrow ) {
-                                        for ( uint_fast64_t orow( 0 ); orow < other_rows; ++orow ) {
-                                            // if there is a match
-                                            if ( *main_cd->at( mrow ) == *other_cd->at( orow ) ) {
-                                                // copy the values to the main table
-                                                for ( uint_fast16_t col( 0 ); col < other_column_amount; ++col ) {
-                                                    main_cd = std::get<1>( operation_table->data[main_column_amount + col] );
-                                                    other_cd = std::get<1>( other_table->data[col] );
-                                                    *main_cd->at( mrow ) = *other_cd->at( orow );
-                                                }
-                                                // switching back to the compared columns
-                                                main_cd = std::get<1>( operation_table->data[main_column_index] );
-                                                other_cd = std::get<1>( other_table->data[other_column_index] );
-                                            }
-                                        }
-                                    }
-                                    // deleting the columns on which the JOIN was based
-                                    other_column_index += main_column_amount;
-                                    operation_table->delete_column( other_column_index );
-                                    operation_table->delete_column( main_column_index );
-                                } else check.push_error( ERROR_TYPE::INVALID_INSTRUCTION, *tokens[2] + " at JOIN");
-                            } else check.push_error( ERROR_TYPE::INVALID_COLUMN_NAME, "JOIN" );
-                        } else check.push_error( ERROR_TYPE::INVALID_TABLE_NAME, "JOIN" );
-                    } else check.push_error( ERROR_TYPE::NO_STARTING_TABLE, "JOIN" );
-                } else check.push_error( ERROR_TYPE::NOT_ENOUGH_ARGUMENTS, "JOIN" );
-            } else if ( *tokens[0] == "ALIAS" ) {
-                if ( tokens_size > 2 ) {
-                    // renaming the column
-                    uint_fast16_t index( operation_table->get_column_index( *tokens[1] ) );
-                    operation_table->rename_column( index, *tokens[2] );
-                } else check.push_error( ERROR_TYPE::NOT_ENOUGH_ARGUMENTS, "ALIAS" );
-            } else if ( *tokens[0] == "PICK" ) {
-                if ( tokens_size > 1 ) {
-                    // deleting the "PICK"
-                    delete tokens[0];
-                    tokens.erase( tokens.begin() );
-                    table* ot( new table );
-
-                    // selecting the columns and pushing them to new table
-                    uint_fast16_t index( NULL16_INDEX );
-                    for ( std::string* token : tokens ) {
-                        index = operation_table->get_column_index( *token );
-                        if ( index != NULL16_INDEX ) {
-                            // 1.5 hours of trying to find a solution (alongside with table constructor)
-                            column_data* new_data( new column_data );
-                            std::string new_name( std::get<0>( operation_table->data[index] ) );
-                            
-                            // deep copy
-                            for ( cell_data* dc : *std::get<1>(operation_table->data[index]) ) {
-                                new_data->push_back( new cell_data( *dc ) );
-                            }
-
-                            column_whole cw( std::make_tuple( new_name, new_data ) );
-                            ot->data.push_back( cw );
-                        }
-                    }
-
-                    // replacing the tables
-                    *operation_table = *ot;
-
-                    delete ot;
-                } else check.push_error( ERROR_TYPE::NOT_ENOUGH_ARGUMENTS, "PICK" );
-            } else if ( *tokens[0] == "WHERE" ) {
-                if ( tokens_size > 1 ) {
-                    // checking whether the 'SELECT' occurred
-                    if ( operation_table->data.size() ) {
-                        // resetting the flags
-                        evaluation_format_error = false;
-                        evaluation_division_warning = false;
-                        evaluation_mixed_warning = false;
-                        // deleting the "WHERE"
-                        delete tokens[0];
-                        tokens.erase( tokens.begin() );
-                        // the amount of rows based on the first column
-                        uint_fast64_t rows( std::get<1>( operation_table->data[0] )->size() );
-                        bool evaluation( true );
-
-                        for ( uint_fast64_t row( 0 ); row < rows; ++row ) {
-                            evaluation = evaluate_expression( tokens, row );
-                            // invalid format error
-                            if ( evaluation_format_error ) {
-                                check.push_error( ERROR_TYPE::INVALID_EXPRESSION_FORMAT, "WHERE" );
-                                break;
-                            }
-                            // if row does not match the expressions, we erase it
-                            if ( !evaluation ) {
-                                column_data* cd( nullptr );
-                                for ( column_whole cw : operation_table->data ) {
-                                    cd = std::get<1>( cw );
-                                    delete cd->at( row );
-                                    cd->erase( cd->begin() + row );
-                                }
-                                // when erasing the number of rows decreases
-                                // and the index stays the same
-                                rows--;
-                                row--;
-                            }
-                        }
-                        /*
-                            If it was checked while evaluating there would
-                            be the same amount of warnings as there are rows
-                        */
-                        if ( evaluation_division_warning ) check.push_warning( WARNING_TYPE::DIVISION_BY_ZERO, "WHERE" );
-                        if ( evaluation_mixed_warning ) check.push_warning( WARNING_TYPE::TYPES_MIXUP, "WHERE" );
-                    } else check.push_error( ERROR_TYPE::NO_STARTING_TABLE, "WHERE" );
-                } else check.push_error( ERROR_TYPE::NOT_ENOUGH_ARGUMENTS, "WHERE" );
-            } else if ( *tokens[0] == "INSERT" ) { // TO REWRITE LATER
-                if ( tokens_size > 1 ) {
-                    uint_fast64_t index( get_table_index( *tokens[1] ) );
-                    if ( index != NULL64_INDEX ) {
-                        table* t( tables[index] );
-                        // creating a new row and filling them with given parameters
-                        uint_fast64_t row( t->create_row() );
-
-                        for ( uint_fast16_t i( 0 ); i < t->data.size(); ++i ) {
-                            // if we moved too fast
-                            if ( i + 2 >= tokens_size ) break;
-                            // converting given token to a number or string
-                            std::istringstream iss( *tokens[i + 2] );
-                            int_fast64_t data_int;
-                            long double data_float;
-                            // i didn't come up with better solution (to do for later)
-                            if ( iss >> data_float && (iss.clear(), iss.seekg( 0 ), iss >> data_int) ) {
-                                if ( data_float == data_int ) {
-                                    t->change_row( row, i, data_int );
-                                } else {
-                                    t->change_row( row, i, data_float );
-                                }
-                            } else {
-                                *tokens[i + 2] = tokens[i + 2]->substr( 1, tokens[i + 2]->length() - 2 );
-                                t->change_row( row, i, *tokens[i + 2] );
-                            }
-                        }
-                    } else check.push_error( ERROR_TYPE::INVALID_TABLE_NAME, "INSERT" );
-                } else check.push_error( ERROR_TYPE::NOT_ENOUGH_ARGUMENTS, "INSERT" );
-            } else if ( *tokens[0] == "CREATE" ) {
-                if ( tokens_size > 1 ) {
-                    if ( *tokens[1] == "TABLE" ) {
-                        if ( tokens_size > 2 ) {
-                            create_table( *tokens[2] );
-                        } else check.push_error( ERROR_TYPE::NOT_ENOUGH_ARGUMENTS, "CREATE" );
-                    } else if ( *tokens[1] == "COLUMNS" ) {
-                        if ( tokens_size > 3 ) {
-                            uint_fast64_t index( get_table_index( *tokens[2] ) );
-                            // deleting the "CREATE COLUMNS"
-                            delete tokens[0];
-                            delete tokens[1];
-                            delete tokens[2];
-                            tokens.erase( tokens.begin() );
-                            tokens.erase( tokens.begin() );
-                            tokens.erase( tokens.begin() );
-                            if ( index != NULL64_INDEX ) {
-                                for ( std::string* token : tokens ) {
-                                    tables[index]->create_column( *token );
-                                }
-                            } else check.push_error( ERROR_TYPE::INVALID_TABLE_NAME, "CREATE" );
-                        } else check.push_error( ERROR_TYPE::NOT_ENOUGH_ARGUMENTS, "CREATE" );
-                    } else check.push_error( ERROR_TYPE::INVALID_INSTRUCTION, *tokens[1] + " at CREATE" );
-                } else check.push_error( ERROR_TYPE::NOT_ENOUGH_ARGUMENTS, "CREATE" );
-            }
-            // invalid instruction
-            else {
-                check.push_error( ERROR_TYPE::INVALID_INSTRUCTION, *tokens[0] );
-            }
-        }
     }
 
     void database::rvquery( std::string query, DISPLAY_TYPE type ) {
@@ -564,5 +345,243 @@ namespace rv {
 
         // showing results
         operation_table->display( type );
+    }
+
+    void database::go_go_gadget_query( std::vector<std::string*>& tokens ) {
+        const uint_fast64_t tokens_size( tokens.size() );
+        // ignoring empty lines
+        if ( tokens_size ) {
+            if ( *tokens[0] == "SELECT" )       SELECT_query( tokens, tokens_size );
+            else if ( *tokens[0] == "JOIN" )    JOIN_query( tokens, tokens_size );
+            else if ( *tokens[0] == "ALIAS" )   ALIAS_query( tokens, tokens_size );
+            else if ( *tokens[0] == "PICK" )    PICK_query( tokens, tokens_size );
+            else if ( *tokens[0] == "WHERE" )   WHERE_query( tokens, tokens_size );
+            else if ( *tokens[0] == "INSERT" )  INSERT_query( tokens, tokens_size );
+            else if ( *tokens[0] == "CREATE" )  CREATE_query( tokens, tokens_size );
+            // invalid instruction
+            else check.push_error( ERROR_TYPE::INVALID_INSTRUCTION, *tokens[0] );
+        }
+    }
+
+    void database::SELECT_query( std::vector<std::string*>& tokens, const uint_fast64_t tokens_size ) {
+        if ( tokens_size > 1 ) {
+            uint_fast64_t index( get_table_index( *tokens[1] ) );
+            if ( index != NULL64_INDEX ) {
+                // copy, if exists
+                *operation_table = *tables[index];
+                // renaming the columns to 'table.column'
+                for ( uint_fast64_t i( 0 ); i < operation_table->data.size(); ++i ) {
+                    std::get<0>( operation_table->data[i] ) = operation_table->name + '.' + std::get<0>( operation_table->data[i] );
+                }
+            } else check.push_error( ERROR_TYPE::INVALID_TABLE_NAME, "SELECT" );
+        } else check.push_error( ERROR_TYPE::NOT_ENOUGH_ARGUMENTS, "SELECT" );
+    }
+
+    void database::JOIN_query( std::vector<std::string*>& tokens, const uint_fast64_t tokens_size ) {
+        if ( tokens_size > 4 ) {
+            // checking whether the 'SELECT' occurred
+            if ( operation_table->data.size() ) {
+                // decoding the tokens
+                uint_fast64_t main_column_index( operation_table->get_column_index( *tokens[1] ) );
+                uint_fast64_t main_column_amount( operation_table->data.size() );
+                uint_fast64_t oti( get_table_index( *tokens[4] ) );
+
+                // if the table exists
+                if ( oti != NULL64_INDEX ) {
+                    // further token decoding
+                    table* other_table( tables[oti] );
+                    uint_fast64_t other_column_index( other_table->get_column_index( *tokens[3] ) );
+                    uint_fast64_t other_column_amount( other_table->data.size() );
+                    // if the columns exist
+                    if ( (main_column_index != NULL64_INDEX) && (other_column_index != NULL64_INDEX) ) {
+                        // table rows
+                        uint_fast64_t main_rows( std::get<1>( operation_table->data[0] )->size() );
+                        uint_fast64_t other_rows( std::get<1>( other_table->data[0] )->size() );
+                        // pointer to any column data
+                        column_data* main_cd( nullptr );
+                        column_data* other_cd( nullptr );
+
+                        // many-to-one relation
+                        if ( *tokens[2] == "N1" ) {
+                            // operation table column data
+                            main_cd = std::get<1>( operation_table->data[main_column_index] );
+                            other_cd = std::get<1>( other_table->data[other_column_index] );
+                            // merging two tables with new names
+                            std::string column_name( "" );
+                            for ( column_whole cw : other_table->data ) {
+                                column_name = other_table->name + '.' + std::get<0>( cw );
+                                operation_table->create_column( column_name );
+                            }
+
+                            // checking the specified relation
+                            for ( uint_fast64_t mrow( 0 ); mrow < main_rows; ++mrow ) {
+                                for ( uint_fast64_t orow( 0 ); orow < other_rows; ++orow ) {
+                                    // if there is a match
+                                    if ( *main_cd->at( mrow ) == *other_cd->at( orow ) ) {
+                                        // copy the values to the main table
+                                        for ( uint_fast64_t col( 0 ); col < other_column_amount; ++col ) {
+                                            main_cd = std::get<1>( operation_table->data[main_column_amount + col] );
+                                            other_cd = std::get<1>( other_table->data[col] );
+                                            *main_cd->at( mrow ) = *other_cd->at( orow );
+                                        }
+                                        // switching back to the compared columns
+                                        main_cd = std::get<1>( operation_table->data[main_column_index] );
+                                        other_cd = std::get<1>( other_table->data[other_column_index] );
+                                    }
+                                }
+                            }
+                            // deleting the columns on which the JOIN was based
+                            other_column_index += main_column_amount;
+                            operation_table->delete_column( other_column_index );
+                            operation_table->delete_column( main_column_index );
+                        } else check.push_error( ERROR_TYPE::INVALID_INSTRUCTION, *tokens[2] + " at JOIN" );
+                    } else check.push_error( ERROR_TYPE::INVALID_COLUMN_NAME, "JOIN" );
+                } else check.push_error( ERROR_TYPE::INVALID_TABLE_NAME, "JOIN" );
+            } else check.push_error( ERROR_TYPE::NO_STARTING_TABLE, "JOIN" );
+        } else check.push_error( ERROR_TYPE::NOT_ENOUGH_ARGUMENTS, "JOIN" );
+    }
+
+    void database::ALIAS_query( std::vector<std::string*>& tokens, const uint_fast64_t tokens_size ) {
+        if ( tokens_size > 2 ) {
+            // renaming the column
+            uint_fast64_t index( operation_table->get_column_index( *tokens[1] ) );
+            operation_table->rename_column( index, *tokens[2] );
+        } else check.push_error( ERROR_TYPE::NOT_ENOUGH_ARGUMENTS, "ALIAS" );
+    }
+
+    void database::PICK_query( std::vector<std::string*>& tokens, const uint_fast64_t tokens_size ) {
+        if ( tokens_size > 1 ) {
+            // deleting the "PICK"
+            delete tokens[0];
+            tokens.erase( tokens.begin() );
+            table* ot( new table );
+
+            // selecting the columns and pushing them to new table
+            uint_fast64_t index( NULL64_INDEX );
+            for ( std::string* token : tokens ) {
+                index = operation_table->get_column_index( *token );
+                if ( index != NULL64_INDEX ) {
+                    // 1.5 hours of trying to find a solution (alongside with table constructor)
+                    column_data* new_data( new column_data );
+                    std::string new_name( std::get<0>( operation_table->data[index] ) );
+
+                    // deep copy
+                    for ( cell_data* dc : *std::get<1>( operation_table->data[index] ) ) {
+                        new_data->push_back( new cell_data( *dc ) );
+                    }
+
+                    column_whole cw( std::make_tuple( new_name, new_data ) );
+                    ot->data.push_back( cw );
+                }
+            }
+
+            // replacing the tables
+            *operation_table = *ot;
+
+            delete ot;
+        } else check.push_error( ERROR_TYPE::NOT_ENOUGH_ARGUMENTS, "PICK" );
+    }
+
+    void database::WHERE_query( std::vector<std::string*>& tokens, const uint_fast64_t tokens_size ) {
+        if ( tokens_size > 1 ) {
+            // checking whether the 'SELECT' occurred
+            if ( operation_table->data.size() ) {
+                // resetting the flags
+                evaluation_format_error = false;
+                evaluation_division_warning = false;
+                evaluation_mixed_warning = false;
+                // deleting the "WHERE"
+                delete tokens[0];
+                tokens.erase( tokens.begin() );
+                // the amount of rows based on the first column
+                uint_fast64_t rows( std::get<1>( operation_table->data[0] )->size() );
+                bool evaluation( true );
+
+                for ( uint_fast64_t row( 0 ); row < rows; ++row ) {
+                    evaluation = evaluate_expression( tokens, row );
+                    // invalid format error
+                    if ( evaluation_format_error ) {
+                        check.push_error( ERROR_TYPE::INVALID_EXPRESSION_FORMAT, "WHERE" );
+                        break;
+                    }
+                    // if row does not match the expressions, we erase it
+                    if ( !evaluation ) {
+                        column_data* cd( nullptr );
+                        for ( column_whole cw : operation_table->data ) {
+                            cd = std::get<1>( cw );
+                            delete cd->at( row );
+                            cd->erase( cd->begin() + row );
+                        }
+                        // when erasing the number of rows decreases
+                        // and the index stays the same
+                        rows--;
+                        row--;
+                    }
+                }
+                /*
+                    If it was checked while evaluating there would
+                    be the same amount of warnings as there are rows
+                */
+                if ( evaluation_division_warning ) check.push_warning( WARNING_TYPE::DIVISION_BY_ZERO, "WHERE" );
+                if ( evaluation_mixed_warning ) check.push_warning( WARNING_TYPE::TYPES_MIXUP, "WHERE" );
+            } else check.push_error( ERROR_TYPE::NO_STARTING_TABLE, "WHERE" );
+        } else check.push_error( ERROR_TYPE::NOT_ENOUGH_ARGUMENTS, "WHERE" );
+    }
+
+    void database::INSERT_query( std::vector<std::string*>& tokens, const uint_fast64_t tokens_size ) {
+        if ( tokens_size > 1 ) {
+            uint_fast64_t index( get_table_index( *tokens[1] ) );
+            if ( index != NULL64_INDEX ) {
+                table* t( tables[index] );
+                // creating a new row and filling them with given parameters
+                uint_fast64_t row( t->create_row() );
+
+                for ( uint_fast64_t i( 0 ); i < t->data.size(); ++i ) {
+                    // if we moved too fast
+                    if ( i + 2 >= tokens_size ) break;
+                    // converting given token to a number or string
+                    std::istringstream iss( *tokens[i + 2] );
+                    int_fast64_t data_int;
+                    long double data_float;
+                    // i didn't come up with better solution (to do for later)
+                    if ( iss >> data_float && (iss.clear(), iss.seekg( 0 ), iss >> data_int) ) {
+                        if ( data_float == data_int ) {
+                            t->change_row( row, i, data_int );
+                        } else {
+                            t->change_row( row, i, data_float );
+                        }
+                    } else {
+                        *tokens[i + 2] = tokens[i + 2]->substr( 1, tokens[i + 2]->length() - 2 );
+                        t->change_row( row, i, *tokens[i + 2] );
+                    }
+                }
+            } else check.push_error( ERROR_TYPE::INVALID_TABLE_NAME, "INSERT" );
+        } else check.push_error( ERROR_TYPE::NOT_ENOUGH_ARGUMENTS, "INSERT" );
+    }
+
+    void database::CREATE_query( std::vector<std::string*>& tokens, const uint_fast64_t tokens_size ) {
+        if ( tokens_size > 1 ) {
+            if ( *tokens[1] == "TABLE" ) {
+                if ( tokens_size > 2 ) {
+                    create_table( *tokens[2] );
+                } else check.push_error( ERROR_TYPE::NOT_ENOUGH_ARGUMENTS, "CREATE" );
+            } else if ( *tokens[1] == "COLUMNS" ) {
+                if ( tokens_size > 3 ) {
+                    uint_fast64_t index( get_table_index( *tokens[2] ) );
+                    // deleting the "CREATE COLUMNS"
+                    delete tokens[0];
+                    delete tokens[1];
+                    delete tokens[2];
+                    tokens.erase( tokens.begin() );
+                    tokens.erase( tokens.begin() );
+                    tokens.erase( tokens.begin() );
+                    if ( index != NULL64_INDEX ) {
+                        for ( std::string* token : tokens ) {
+                            tables[index]->create_column( *token );
+                        }
+                    } else check.push_error( ERROR_TYPE::INVALID_TABLE_NAME, "CREATE" );
+                } else check.push_error( ERROR_TYPE::NOT_ENOUGH_ARGUMENTS, "CREATE" );
+            } else check.push_error( ERROR_TYPE::INVALID_INSTRUCTION, *tokens[1] + " at CREATE" );
+        } else check.push_error( ERROR_TYPE::NOT_ENOUGH_ARGUMENTS, "CREATE" );
     }
 }

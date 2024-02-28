@@ -163,5 +163,16 @@ namespace rv {
 				Evaluates the query based on the tokens
 			*/
 			void go_go_gadget_query( std::vector<std::string*>& );
+
+			/*
+				Query instruction functions
+			*/
+			void SELECT_query( std::vector<std::string*>&, const uint_fast64_t );
+			void JOIN_query( std::vector<std::string*>&, const uint_fast64_t );
+			void ALIAS_query( std::vector<std::string*>&, const uint_fast64_t );
+			void PICK_query( std::vector<std::string*>&, const uint_fast64_t );
+			void WHERE_query( std::vector<std::string*>&, const uint_fast64_t );
+			void INSERT_query( std::vector<std::string*>&, const uint_fast64_t );
+			void CREATE_query( std::vector<std::string*>&, const uint_fast64_t );
 	};
 }
