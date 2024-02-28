@@ -64,11 +64,17 @@
 
 		INSERT <table> <value> <value> ... - inserts a new row to a specified table,
         with the same order as the columns are given
-            INSERT users "Krzysztof" "Luczka";
+            INSERT users "Krzysztof" "Luczka" 32;
 
-        DELETE ROW <table> - deletes rows from specified table, that match those
+        CREATE TABLE <table> - creates a new table with specified name
+            CREATE TABLE streets;
+
+        CREATE COLUMNS <table> <column> - creates new columns in a specified table
+            CREATE COLUMN streets name length;
+
+        DELETE ROWS <table> - deletes rows from specified table, that match those
         selected in an operation table
-            DELETE ROW users
+            DELETE ROW users;
 
         DELETE TABLE <table> - deletes whole specified table
         (does not affect operation table)
@@ -90,12 +96,13 @@
             ASCENDING users.age;
 
         SUM <column> <column> ... - sums given columns
-            SUM users.money; users.debt;
+            SUM users.money users.debt;
 
         AVG <column> <column> ... - averages given columns
             AVG users.age;
 
-        MIN/MAX <column> - selects the row with the smallest/largest value in the column
+        MIN/MAX <column> - selects the row with the smallest/largest value in
+        the specified column
             MAX users.debt;
 
     >   WHERE expressions   <
@@ -250,7 +257,7 @@ namespace rv {
                     values.push( value );
                 } else {
                     // checking if the column exists with given name exists
-                    uint_fast16_t index = operation_table->get_column_index( *token );
+                    uint_fast16_t index( operation_table->get_column_index( *token ) );
                     if ( index != NULL16_INDEX ) {
                         cell_data* value( new cell_data( operation_table->get_row( row, index ) ) );
                         values.push( value );
@@ -290,10 +297,11 @@ namespace rv {
     }
 
     void database::go_go_gadget_query( std::vector<std::string*>& tokens ) {
-        if ( tokens.size() ) { // ignoring empty lines
+        const uint_fast64_t tokens_size( tokens.size() );
+        if ( tokens_size ) { // ignoring empty lines
             if ( *tokens[0] == "SELECT" ) {
-                if ( tokens.size() > 1 ) {
-                    uint_fast64_t index = get_table_index( *tokens[1] );
+                if ( tokens_size > 1 ) {
+                    uint_fast64_t index( get_table_index( *tokens[1] ) );
                     if ( index != NULL64_INDEX ) {
                         // copy, if exists
                         *operation_table = *tables[index];
@@ -304,7 +312,7 @@ namespace rv {
                     } else check.push_error( ERROR_TYPE::INVALID_TABLE_NAME, "SELECT" );
                 } else check.push_error( ERROR_TYPE::NOT_ENOUGH_ARGUMENTS, "SELECT");
             } else if ( *tokens[0] == "JOIN" ) {
-                if ( tokens.size() > 4 ) {
+                if ( tokens_size > 4 ) {
                     // checking whether the 'SELECT' occurred
                     if ( operation_table->data.size() ) {
                         // decoding the tokens
@@ -366,13 +374,13 @@ namespace rv {
                     } else check.push_error( ERROR_TYPE::NO_STARTING_TABLE, "JOIN" );
                 } else check.push_error( ERROR_TYPE::NOT_ENOUGH_ARGUMENTS, "JOIN" );
             } else if ( *tokens[0] == "ALIAS" ) {
-                if ( tokens.size() > 2 ) {
+                if ( tokens_size > 2 ) {
                     // renaming the column
                     uint_fast16_t index( operation_table->get_column_index( *tokens[1] ) );
                     operation_table->rename_column( index, *tokens[2] );
                 } else check.push_error( ERROR_TYPE::NOT_ENOUGH_ARGUMENTS, "ALIAS" );
             } else if ( *tokens[0] == "PICK" ) {
-                if ( tokens.size() > 1 ) {
+                if ( tokens_size > 1 ) {
                     // deleting the "PICK"
                     delete tokens[0];
                     tokens.erase( tokens.begin() );
@@ -403,7 +411,7 @@ namespace rv {
                     delete ot;
                 } else check.push_error( ERROR_TYPE::NOT_ENOUGH_ARGUMENTS, "PICK" );
             } else if ( *tokens[0] == "WHERE" ) {
-                if ( tokens.size() > 1 ) {
+                if ( tokens_size > 1 ) {
                     // checking whether the 'SELECT' occurred
                     if ( operation_table->data.size() ) {
                         // resetting the flags
@@ -447,7 +455,7 @@ namespace rv {
                     } else check.push_error( ERROR_TYPE::NO_STARTING_TABLE, "WHERE" );
                 } else check.push_error( ERROR_TYPE::NOT_ENOUGH_ARGUMENTS, "WHERE" );
             } else if ( *tokens[0] == "INSERT" ) { // TO REWRITE LATER
-                if ( tokens.size() > 1 ) {
+                if ( tokens_size > 1 ) {
                     uint_fast64_t index( get_table_index( *tokens[1] ) );
                     if ( index != NULL64_INDEX ) {
                         table* t( tables[index] );
@@ -456,7 +464,7 @@ namespace rv {
 
                         for ( uint_fast16_t i( 0 ); i < t->data.size(); ++i ) {
                             // if we moved too fast
-                            if ( i + 2 >= tokens.size() ) break;
+                            if ( i + 2 >= tokens_size ) break;
                             // converting given token to a number or string
                             std::istringstream iss( *tokens[i + 2] );
                             int_fast64_t data_int;
@@ -475,6 +483,30 @@ namespace rv {
                         }
                     } else check.push_error( ERROR_TYPE::INVALID_TABLE_NAME, "INSERT" );
                 } else check.push_error( ERROR_TYPE::NOT_ENOUGH_ARGUMENTS, "INSERT" );
+            } else if ( *tokens[0] == "CREATE" ) {
+                if ( tokens_size > 1 ) {
+                    if ( *tokens[1] == "TABLE" ) {
+                        if ( tokens_size > 2 ) {
+                            create_table( *tokens[2] );
+                        } else check.push_error( ERROR_TYPE::NOT_ENOUGH_ARGUMENTS, "CREATE" );
+                    } else if ( *tokens[1] == "COLUMNS" ) {
+                        if ( tokens_size > 3 ) {
+                            uint_fast64_t index( get_table_index( *tokens[2] ) );
+                            // deleting the "CREATE COLUMNS"
+                            delete tokens[0];
+                            delete tokens[1];
+                            delete tokens[2];
+                            tokens.erase( tokens.begin() );
+                            tokens.erase( tokens.begin() );
+                            tokens.erase( tokens.begin() );
+                            if ( index != NULL64_INDEX ) {
+                                for ( std::string* token : tokens ) {
+                                    tables[index]->create_column( *token );
+                                }
+                            } else check.push_error( ERROR_TYPE::INVALID_TABLE_NAME, "CREATE" );
+                        } else check.push_error( ERROR_TYPE::NOT_ENOUGH_ARGUMENTS, "CREATE" );
+                    } else check.push_error( ERROR_TYPE::INVALID_INSTRUCTION, *tokens[1] + " at CREATE" );
+                } else check.push_error( ERROR_TYPE::NOT_ENOUGH_ARGUMENTS, "CREATE" );
             }
             // invalid instruction
             else {

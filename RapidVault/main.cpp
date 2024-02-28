@@ -4,91 +4,30 @@
 
 int main() {
 	rv::database db;
-	rv::table* t = db.get_table_pointer( db.create_table( "users" ) );
 
-	t->create_column( "name" );
-	t->create_column( "surname" );
-	t->create_column( "profession" );
-	t->create_column( "main_city" );
+	rv::table* t;
 
-	t->create_row();
-	t->change_row( 0, "name", "Krzysztof" );
-	t->change_row( 0, "surname", "Luczka" );
-	t->change_row( 0, "profession", 1 );
-	t->change_row( 0, "main_city", 3 );
+	db.rvquery( "CREATE TABLE users; CREATE COLUMNS users name surname profession main_city;" );
+	db.rvquery( "INSERT users \"Krzysztof\" \"Luczka\" 1 3;" );
+	db.rvquery( "INSERT users \"Object\" \"Object\" 2 3;" );
+	db.rvquery( "INSERT users \"Jane\" \"Doe\" 1 3;" );
+	db.rvquery( "INSERT users \"Juan\" \"Pablo II\" 0 3;" );
 
-	t->create_row();
-	t->change_row( 1, "name", "Object" );
-	t->change_row( 1, "surname", "Object" );
-	t->change_row( 1, "profession", 2 );
-	t->change_row( 1, "main_city", 3 );
+	db.rvquery( "CREATE TABLE professions; CREATE COLUMNS professions id profession_name salary city;" );
+	db.rvquery( "INSERT professions 0 \"Pope\" 1239 1;" );
+	db.rvquery( "INSERT professions 1 \"Doctor\" 2380 0;" );
+	db.rvquery( "INSERT professions 2 \"Spoon bender\" 100000 2;" );
 
-	t->create_row();
-	t->change_row( 2, "name", "Jane" );
-	t->change_row( 2, "surname", "Doe" );
-	t->change_row( 2, "profession", 1 );
-	t->change_row( 2, "main_city", 3 );
-
-	t->create_row();
-	t->change_row( 3, "name", "Juan" );
-	t->change_row( 3, "surname", "Pablo II" );
-	t->change_row( 3, "profession", 0 );
-	t->change_row( 3, "main_city", 3 );
-
-	t = db.get_table_pointer( db.create_table( "professions" ) );
-	t->create_column( "id" );
-	t->create_column( "profession_name" );
-	t->create_column( "salary" );
-	t->create_column( "city" );
-
-	t->create_row();
-	t->change_row( 0, "id", 0 );
-	t->change_row( 0, "profession_name", "Pope" );
-	t->change_row( 0, "salary", 1239 );
-	t->change_row( 0, "city", 1 );
-
-	t->create_row();
-	t->change_row( 1, "id", 1 );
-	t->change_row( 1, "profession_name", "Doctor" );
-	t->change_row( 1, "salary", 2380 );
-	t->change_row( 1, "city", 0);
-
-	t->create_row();
-	t->change_row( 2, "id", 2 );
-	t->change_row( 2, "profession_name", "Spoon bender" );
-	t->change_row( 2, "salary", 100000 );
-	t->change_row( 2, "city", 2 );
-
-	t = db.get_table_pointer( db.create_table( "cities" ) );
-
-	t->create_column( "id" );
-	t->create_column( "name" );
-
-	t->create_row();
-	t->change_row( 0, "id", 0 );
-	t->change_row( 0, "name", "Poznan" );
-
-	t->create_row();
-	t->change_row( 1, "id", 1 );
-	t->change_row( 1, "name", "Warszawa" );
-
-	t->create_row();
-	t->change_row( 2, "id", 2 );
-	t->change_row( 2, "name", "Gdansk" );
-
-	t->create_row();
-	t->change_row( 3, "id", 3 );
-	t->change_row( 3, "name", "Krakow" );
+	db.rvquery( "CREATE TABLE cities; CREATE COLUMNS cities id name;" );
+	db.rvquery( "INSERT cities 0 \"Poznan\";" );
+	db.rvquery( "INSERT cities 1 \"Warszawa\";" );
+	db.rvquery( "INSERT cities 2 \"Gdansk\";" );
+	db.rvquery( "INSERT cities 3 \"Krakow\";" );
 	
-	db.rvquery("INSERT users \"Random\" \"User\" 2 -1.2;");
-	db.rvquery( "SELECT users; JOIN users.profession N1 id professions; JOIN users.main_city N1 id cities; WHERE users.name \"Krzysztof\" == professions.profession_name \"Spoon bender\" == ||", rv::DISPLAY_TYPE::NORMAL );
-	std::cout << std::endl;
-	db.rvquery( "SELECT users; JOIN users.profession N1 id professions; JOIN users.main_city N1 id cities; WHERE users.name \"Krzysztof\" == professions.profession_name \"Spoon bender\" == ||", rv::DISPLAY_TYPE::RAW );
-	std::cout << std::endl;
-	db.rvquery( "SELECT users; JOIN users.profession N1 id professions; JOIN users.main_city N1 id cities; WHERE users.name \"Krzysztof\" == professions.profession_name \"Spoon bender\" == ||", rv::DISPLAY_TYPE::JSON );
-	std::cout << std::endl;
-	db.rvquery( "SELECT users; JOIN users.profession N1 id professions; JOIN users.main_city N1 id cities; WHERE users.name \"Krzysztof\" == professions.profession_name \"Spoon bender\" == ||", rv::DISPLAY_TYPE::JSON_INVERTED );
-
+	db.rvquery( "SELECT users;" );
+	db.rvquery( "SELECT professions;" );
+	db.rvquery( "SELECT cities;" );
+	
 	// ultimate error generator
 	/*db.rvquery( "JOIN users.profession N1 id professions; SELECT users; JOIN u.p N1 id professions; JOIN users.profession J id professions; ALIAS; QWERTY; INSERT user \"test\"; WHERE users.surname users.name; WHERE users.main_city users.profession /; WHERE users.surname users.profession >=;" );
 	db.check.print_errors();
