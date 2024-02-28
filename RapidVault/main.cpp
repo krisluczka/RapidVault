@@ -33,7 +33,7 @@ int main() {
 	db.rvquery( "INSERT cities 4 \"Lodz\" 10; SELECT cities;" );
 	
 	// ultimate error generator
-	/*db.rvquery( "JOIN users.profession N1 id professions; SELECT users; JOIN u.p N1 id professions; JOIN users.profession J id professions; ALIAS; QWERTY; INSERT user \"test\"; WHERE users.surname users.name; WHERE users.main_city users.profession /; WHERE users.surname users.profession >=;" );
+	/*db.rvquery( "JOIN users.profession LEFT id professions; SELECT users; JOIN u.p RIGHT id professions; JOIN users.profession n1 id professions; ALIAS; QWERTY; INSERT user \"test\"; WHERE users.surname users.name; WHERE users.main_city users.profession /; WHERE users.surname users.profession >=;" );
 	db.check.print_errors();
 	db.check.print_warnings();*/
 }

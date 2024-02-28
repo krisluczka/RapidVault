@@ -35,17 +35,12 @@
         SELECT <table> - selects the table as the primary operational table
             SELECT main;
 
-		JOIN <main column> <relation> <table column> <table> - selects given tables
-        and joins them to the operational table
-			JOIN main.id N1 id users
-
-            - 11 means one-to-one relation
-            - 1N means one-to-many relation
-            - N1 means many-to-one relation
-            - NN means many-to-many relation
+        JOIN <main column> <relation> <table column> <table> - selects given table
+        and joins it to the operational table
+			JOIN main.id LEFT id users
 
         ALIAS <column> <new_name> - selects given column and renames them
-            ALIAS main.test Testing_column
+            ALIAS main.test testing_column
 
 		PICK <column> <column> ... - selects given columns, discarding others
 		from the final result
@@ -53,7 +48,7 @@
 
 		WHERE <expression> - selects only these rows, where the expression is true
 		! WARNING ! Expressions use Reverse Polish Notation
-			WHERE main.age users.age > main.experience users.experience > &&;\
+			WHERE main.age users.age > main.experience users.experience > &&;
 
         *PUSH <value> <value> ... - inserts a row to the operation table
             PUSH "Krzysztof" "Luczka" 18;
@@ -397,8 +392,8 @@ namespace rv {
                         column_data* main_cd( nullptr );
                         column_data* other_cd( nullptr );
 
-                        // many-to-one relation
-                        if ( *tokens[2] == "N1" ) {
+                        // joining to the left table
+                        if ( *tokens[2] == "LEFT" ) {
                             // operation table column data
                             main_cd = std::get<1>( operation_table->data[main_column_index] );
                             other_cd = std::get<1>( other_table->data[other_column_index] );
