@@ -1,103 +1,5 @@
-/*
-	RVquery is a part of the RapidVault project,
-	and it's distributed under the same MIT license.
-
-
-
-	#   RVquery small documentation     #
-
-
-	Queries are written by singular commands separated by a semicolon.
-	For example:
-		"command arg arg; command; command arg;"
-
-	For each query, an environment (operation table) is created in which
-    the result is stored. So when the query looks like this:
-	'JOIN' spits out both tables joined together according to
-    the specified relation rules. Adding additional commands in
-	the same query after the 'JOIN' would do the operations on merged table.
-
-	! WARNING !
-	When merging tables, the columns will appear with the name
-		"table_name.column_name"
-	instead of simple "column_name".
-
-    RVquery returns an error whenever given instruction isn't compilable.
-    Warnings should be interpreted as errors that do not stop the query.
-
-		<command> - <description>
-			<example of use>
-
-
-
-	>	Operating queries	<
-
-        SELECT <table> - selects the table as the primary operational table
-            SELECT main;
-
-        JOIN <main column> <relation> <table column> <table> - selects given table
-        and joins it to the operational table
-			JOIN main.id LEFT id users
-
-        ALIAS <column> <new_name> - selects given column and renames them
-            ALIAS main.test testing_column
-
-		PICK <column> <column> ... - selects given columns, discarding others
-		from the final result
-			PICK users.name main.title;
-
-		WHERE <expression> - selects only these rows, where the expression is true
-		! WARNING ! Expressions use Reverse Polish Notation
-			WHERE main.age users.age > main.experience users.experience > &&;
-
-        *PUSH <value> <value> ... - inserts a row to the operation table
-            PUSH "Krzysztof" "Luczka" 18;
-
-
-
-	>	Manipulating queries    < (they don't use or affect the operation table)
-
-		INSERT <table> <value> <value> ... - inserts a new row to a specified table,
-        with the same order as the columns are given
-            INSERT users "Krzysztof" "Luczka" 32;
-
-        CREATE TABLE <table> - creates a new table with specified name
-            CREATE TABLE streets;
-
-        CREATE COLUMNS <table> <column> - creates new columns in a specified table
-            CREATE COLUMN streets name length;
-
-        *DELETE ROWS <table> WHERE <expression> - deletes rows from given table that
-        match the expression
-            DELETE ROWS users;
-
-        *DELETE TABLE <table> - deletes whole specified table
-            DELETE TABLE test_table;
-
-
-
-    >   Keywords    <
-        
-        *DISTINCT <column> - selects only distinct rows by given column
-            DISTINCT users.id;
-
-        *ASCENDING/DESCENDING <column> - sorts ascending or descending relative
-        to the selected column
-            ASCENDING users.age;
-
-        *SUM <column> - sums given columns
-            SUM users.money users.debt;
-
-        *AVG <column> - averages given columns
-            AVG users.age;
-
-        *MIN/MAX <column> - selects the row with the smallest/largest value in
-        the specified column
-            MAX users.debt;
-
-*/
 #include "database.h"
-#define isOperator(token) (token == "+" || token == "-" || token == "*" || token == "/" || token == "&&" || token == "||" || token == "<" || token == "<=" || token == ">" || token == ">=" || token == "==" || token == "!=" )
+#define isOperator(token) (token == "+" || token == "-" || token == "*" || token == "%" || token == "/" || token == "&&" || token == "||" || token == "<" || token == "<=" || token == ">" || token == ">=" || token == "==" || token == "!=" )
 
 namespace rv {
     cell_data database::evaluate_operator( cell_data* A, cell_data* B, std::string token ) {
@@ -147,15 +49,15 @@ namespace rv {
             else if ( a_string && !b_string ) result = as.length() * b;
             else                              result = a * b;
         } else if ( token == "/" ) {
-            if ( a_string && b_string )       if ( bs.length() != 0 ) result = static_cast<int_fast64_t>(as.length() / bs.length()); else { evaluation_division_warning = true; return NAN; }
+            if ( a_string && b_string )       if ( bs.length() != 0 ) result = (long double)as.length() / (long double)bs.length(); else { evaluation_division_warning = true; return NAN; }
             else if ( !a_string && b_string ) if ( bs.length() != 0 ) result = a / bs.length(); else { evaluation_division_warning = true; return NAN; }
             else if ( a_string && !b_string ) if ( b != 0 ) result = as.length() / b; else { evaluation_division_warning = true; return NAN; }
             else                              if ( b != 0 ) result = a / b; else { evaluation_division_warning = true; return NAN; }
         } else if ( token == "%" ) {
-            if ( a_string && b_string )       if ( bs.length() != 0 ) result = static_cast<int_fast64_t>(as.length() / bs.length()); else { evaluation_division_warning = true; return NAN; }
-            else if ( !a_string && b_string ) if ( bs.length() != 0 ) result = a / bs.length(); else { evaluation_division_warning = true; return NAN; }
-            else if ( a_string && !b_string ) if ( b != 0 ) result = as.length() / b; else { evaluation_division_warning = true; return NAN; }
-            else                              if ( b != 0 ) result = a / b; else { evaluation_division_warning = true; return NAN; }
+            if ( a_string && b_string )       if ( bs.length() != 0 ) result = (int_fast64_t)as.length() % (int_fast64_t)bs.length(); else { evaluation_division_warning = true; return NAN; }
+            else if ( !a_string && b_string ) if ( bs.length() != 0 ) result = (int_fast64_t)a % (int_fast64_t)bs.length(); else { evaluation_division_warning = true; return NAN; }
+            else if ( a_string && !b_string ) if ( b != 0 ) result = (int_fast64_t)as.length() % (int_fast64_t)b; else { evaluation_division_warning = true; return NAN; }
+            else                              if ( b != 0 ) result = (int_fast64_t)a % (int_fast64_t)b; else { evaluation_division_warning = true; return NAN; }
         } else if ( token == "&&" ) {
             if ( a_string && b_string )       result = as.length() && bs.length();
             else if ( !a_string && b_string ) result = a && bs.length();
@@ -192,7 +94,7 @@ namespace rv {
             else if ( a_string && !b_string ) result = as.length() == b;
             else                              result = a == b;
         } else if ( token == "!=" ) {
-            if ( a_string && b_string )       result = as.length() != bs.length();
+            if ( a_string && b_string )       result = as != bs;
             else if ( !a_string && b_string ) result = a != bs.length();
             else if ( a_string && !b_string ) result = as.length() != b;
             else                              result = a != b;
@@ -285,10 +187,13 @@ namespace rv {
         return result;
     }
 
-    void database::rvquery( std::string query, DISPLAY_TYPE type ) {
+    bool database::rvquery( std::string query, DISPLAY_TYPE type ) {
         // reseting the query table
         delete operation_table;
         operation_table = new table;
+
+        // reseting the error handler
+        check.clear();
 
         // dividing the query into lines ending with a semicolon
         std::vector<std::string*> lines;
@@ -332,8 +237,13 @@ namespace rv {
             delete line;
         }
 
+        // checking if query was correctly evaluated
+        if ( check.errors.size() ) return false;
+
         // showing results
         operation_table->display( type );
+
+        return true;
     }
 
     void database::go_go_gadget_query( std::vector<std::string*>& tokens ) {
@@ -348,7 +258,7 @@ namespace rv {
             else if ( *tokens[0] == "PUSH" )        PUSH_query( tokens, tokens_size );
             else if ( *tokens[0] == "INSERT" )      INSERT_query( tokens, tokens_size );
             else if ( *tokens[0] == "CREATE" )      CREATE_query( tokens, tokens_size );
-            else if ( *tokens[0] == "DISTINCT" )    DISTINCT_query( tokens, tokens_size );
+            //else if ( *tokens[0] == "DISTINCT" )    DISTINCT_query( tokens, tokens_size );
             // invalid instruction
             else check.push_error( ERROR_TYPE::INVALID_INSTRUCTION, *tokens[0] );
         }

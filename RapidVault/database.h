@@ -116,7 +116,7 @@ namespace rv {
 					RVquery execution
 				###############################
 			*/
-			void rvquery( std::string, DISPLAY_TYPE type = DISPLAY_TYPE::NORMAL );
+			bool rvquery( std::string, DISPLAY_TYPE type = DISPLAY_TYPE::NORMAL );
 
 		private:
 			/*

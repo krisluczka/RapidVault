@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>RapidVault - pre-release 1.0</title>
+        <style>
+            body {
+                margin: 0;
+            }
+
+            header {
+                background-color: #f0f0f0;
+                display: flex;
+                align-items: center;
+                height: 10vh;
+                box-shadow: 0 0 10px black;
+                position: relative;
+            }
+
+            .logo {
+                height: 5vh;
+                margin-right: 2vw;
+                margin-left: 2vw;
+            }
+
+            .container {
+                display: flex;
+                height: 90vh;
+            }
+
+            nav { 
+                width: 15vw;
+                box-shadow: 0 0 10px black;
+                height: 100%;
+                background-color: #fafafa;
+            }
+
+            .nav-button {
+                background-color: #f0f0f0;
+                height: 50px;
+                padding-left: 10px;
+                display: flex;
+                align-items: center;
+                font-size: 20px;
+            }
+
+            .nav-button:hover {
+                background-color: #e0e0e0;
+            }
+
+            a {
+                text-decoration: none;
+                color: black;
+            }
+
+            .content {
+                width: 85vw;
+                height: 100%;
+                overflow: auto;
+                scroll-behavior: smooth;
+            }
+
+            h1 {
+                font-size: 50px;
+                margin: 0;
+            }
+
+            section {
+                padding: 25px;
+                font-size: 20px;
+                text-align: justify;
+            }
+
+            code {
+                font-size: 16px;
+            }
+
+            @media only screen and (max-width: 820px) {
+                nav {
+                    display: none;
+                }
+
+                header {
+                    flex-direction: column;
+                    justify-content: center;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <header>
+            <img class="logo" src="../rv_2024_logo_black.png"/>
+            <i>Krzysztof Łuczka 2024, MIT license</i>
+        </header>
+        <div class="container">
+            <nav>
+                <a href="#introduction"><div class="nav-button">Introduction</div></a>
+                <a href="#database"><div class="nav-button">Database</div></a>
+                <a href="#table"><div class="nav-button">Table</div></a>
+                <a href="#rows-and-columns"><div class="nav-button">Rows and columns</div></a>
+                <a href="#RVquery"><div class="nav-button">RVquery</div></a>
+                <a href="#operating-queries"><div class="nav-button">Operating queries</div></a>
+                <a href="#manipulating-queries"><div class="nav-button">Manipulating queries</div></a>
+                <a href="#expressions"><div class="nav-button">Expressions</div></a>
+                <a href="#errors-and-warnings"><div class="nav-button">Errors and warnings</div></a>
+                <a href="#development-plans"><div class="nav-button">Development plans</div></a>
+                <a href="#contributors"><div class="nav-button">Contributors</div></a>
+            </nav>
+            <article class="content">
+                <section id="introduction">
+                    <h1>Introduction</h1>
+                    <p>RapidVault is a new relational database management system, and its
+                        main goal is to create a strong alternative to currently the most commonly
+                        used database engines. The source code is distributed under MIT license, and can be freely viewed
+                        <a style="text-decoration:underline;" href="https://github.com/krisluczka/RapidVault">there</a>.
+                    </p>
+                    <p>
+                        This project was mainly created to expand my programmer's portfiolio, but quickly
+                        ascended to a full database management system. Currently in progress, written in
+                        modern C++. Note that this pre-release version is likely <b>not</b> bug-free.
+                    </p>
+                    <p>
+                        For now, due to the lack of saving and loading databases, this version functions as a sandbox.
+                        Full version will be released along with other features, that are described in <a href="#development-plans">'Development plans'</a>.
+                    </p>
+                </section>
+                <section id="database">
+                    <h1>Database</h1>
+                    <p>RapidVault pre-release 1.0 operates on only one database, temporarily
+                        named "rapidvault_database". Every database mathematically can hold up
+                        to 2<sup>64</sup> tables, but there has been no tests nor benchmarks
+                        to check the true maximum amount.
+                    </p>
+                    <p>
+                        Every database can get its structure displayed. It shows the database's name,
+                        tables' and their columns' names. This function also counts tables and
+                        their respective rows. The database however can also be renamed, but its name currently
+                        has no real impact on any of the functionalities.
+                    </p>
+                    <pre><code>rv::database db( "example" );
+db.display();
+db.rename( "my_database" );</code></pre>
+                    <p>
+                        To manipulate tables by hand (without queries), there are provided
+                        funtions to do so. Both <code>create_table()</code> and <code>rename_table()</code>
+                        return an index to the table, while <code>delete_table()</code> returns the new amount
+                        of tables in database.
+                    </p>
+                    <pre><code>std::string table_name = "example";
+db.create_table( table_name );
+db.rename_table( table_name, "new_example" );
+db.delete_table( "new_example" );</code></pre>
+                    <p>To get the pointer to a specified table, you'll need to use</p>
+<pre><code>uint64_t index = db.get_table_index( "example" );
+table* pointer = db.get_table_pointer( index );</code></pre>
+                    <p>
+                        Every time a query is processed, the database recieves an info about
+                        potential errors or warnings. Class <code>rv::database</code> has a member class
+                        <code>rv::error_handler check;</code>, so to properly display the issues, use
+                    </p>
+<pre><code>db.check.print_errors();
+db.check.print_warnings();</code></pre>
+                    <p>
+                        RapidVault uses its very own query language called <i>RVquery</i>, which
+                        will be discussed later. Queries are called using <code>rvquery()</code>.
+                        It processes a string, and if evaluated correctly displays results and
+                        returns <code>true</code>. Otherwise it'll return <code>false</code>.
+                    </p>
+<pre><code>std::string query = ...;
+db.rvquery( query );</code></pre>
+                    <p>This function in fact takes two arguments, the second being the display format.</p>
+                    <ul>
+                        <li><code>rv::DISPLAY_TYPE::NORMAL</code> - by default</li>
+                        <li><code>rv::DISPLAY_TYPE::RAW</code> - values separated by space, rows in following lines</li>
+                        <li><code>rv::DISPLAY_TYPE::JSON</code> - placed by rows</li>
+                        <li><code>rv::DISPLAY_TYPE::JSON_INVERTED</code> - placed by columns</li>
+                        <li><code>rv::DISPLAY_TYPE::NONE</code></li>
+                    </ul>
+                </section>
+                <section id="table">
+                    <h1>Table</h1>
+                    <p>The <code>rv::table</code> class <i>per se</i> can be declared without the database.
+                    Even though queries are reserved for databases, table defines following functions that
+                    make it serviceable.</p>
+                    <p>For columns manipulating:</p>
+<pre><code>rv::table t( "my_own_table" );
+t.create_column( "other_table" );              // returns its index
+t.create_column( "another_table", 0 );         // inserts at given index and returns it
+
+uint64_t column_index = t.get_column_index( "other_table" );
+t.rename_column( column_index, "new_name" );   // returns its index
+t.delete_column( column_index );               // returns new amount of columns
+
+rv::table new_t( "copy_of_my_own_table" );
+new_t.copy_structure( &t );                    // copies the structure of other table (column names)
+</code></pre>
+                    <p>For rows manipulating:</p>
+<pre><code>rv::cell_data data1 = "example";
+rv::cell_data data2 = 10;
+uint64_t index1 = t.create_row();         // creates an empty row
+uint64_t index2 = t.create_row();         // and returns its index
+
+// change_row() takes as parameters firstly the row index, column index (or its name) and lastly the data
+t.change_row( index1, column_index, data1 );
+t.change_row( index2, column_index, data2 );
+
+data = t.get_row( index1, column_index ); // data can be fetched the same way
+
+t.delete_row( index1 );                   // returns new amount of rows</code></pre>
+                <p>Note that these functions have no properties when there are no columns in a table.</p>
+                <p>
+                    Lastly, the table can be displayed using <code>display()</code>, which takes a
+                    <code>rv::DISPLAY_TYPE</code> as a parameter, described in the
+                    <a href="#database">'Database'</a> section.
+                </p>
+<pre><code>t.display( rv::DISPLAY_TYPE::JSON );</code></pre>
+                </section>
+                <section id="rows-and-columns">
+                    <h1>Rows and columns</h1>
+                    <p>Mentioned in the previous section <code>rv::cell_data</code> type is actually an <code>std::variant</code> (C++17):</p>
+<pre><code>typedef std::variant&ltint_fast64_t, long double, std::string&gt cell_data;</code></pre>
+                    <p>
+                        This allows the database to be <i>dynamically typed</i>. The columns have no specified type,
+                        and can be switched at any point of runtime. Note that there is no <i>primary key</i>,
+                        because there are no <i>relationship declarations</i> between tables.
+                        All of the queries are evaluated using joins, where any column can be used as a key.
+                    </p>
+                    <h2>Displaying formats</h2>
+                    <p>Let's discuss displaying formats. Starting with <code>rv::DISPLAY_TYPE::NORMAL</code></p>
+<pre><code>
+    o-----------o-------------o
+    | cities.id | cities.name |
+    +-----------+-------------+
+    | 0         | Poznan      |
+    +-----------+-------------+
+    | 1         | Warszawa    |
+    +-----------+-------------+
+    | 2         | Gdansk      |
+    +-----------+-------------+
+    | 3         | Krakow      |
+    +-----------+-------------+
+</code></pre>
+                    <p>This example shows some of the cities in Poland from table <code>cities</code> with columns
+                    <code>id</code> and <code>name</code>.</p>
+                    <p>Another displaying option is <code>rv::DISPLAY_TYPE::RAW</code></p>
+<pre><code>
+    0 Poznan
+    1 Warszawa
+    2 Gdansk
+    3 Krakow
+</code></pre>
+                    <p>
+                        Same table is displayed with pure data separated by spaces. It has no special separators,
+                        making it universal when porting data.
+                    </p>
+                    <p>
+                        There is no problem with converting query results to <code>rv::DISPLAY_TYPE::JSON</code> and
+                        <code>rv::DISPLAY_TYPE::JSON_INVERTED</code>. The differences are simple: one has data placed by rows,
+                        other has data placed by columns.
+                    </p>
+<pre><code>
+    {
+        0: [ 0, "Poznan" ],
+        1: [ 1, "Warszawa" ],
+        2: [ 2, "Gdansk" ],
+        3: [ 3, "Krakow" ],
+    }
+</code></pre>
+                <p>or</p>
+<pre><code>
+    {
+        "cities.id": [ 0, 1, 2, 3 ],
+        "cities.name": [ "Poznan", "Warszawa", "Gdansk", "Krakow" ],
+    }
+</code></pre>
+                <p>Lastly, there is a <code>rv::DISPLAY_TYPE::NONE</code>, which really displays no results.</p>
+                <h2>Naming rules</h2>
+                <p>
+                    Even though database, table and column can be named using spaces, there is no actual way to refer
+                    to them with RVquery. This language divides input into tokens (anything separated by whitespace),
+                    and then analyzes it. The formal and correct way to do this would be to remove the spaces from
+                    the name and use an underscore. The quote character is reserved to data (rows).
+                </p>
+                <p>
+                    It is strongly discouraged to use for example "1name" or "!test%" e.t.c. The names shall not
+                    include any other special characters or numbers, although it technically is allowed to use them.
+                    This advise was introduced due to the direction of the project's development, which may cause
+                    future conflicts with this type of names.
+                </p>
+                <p>
+                    To forbid overwriting, every join temporarily renames columns' by appending their table name
+                    followed by a dot. Currently, there is no method to prevent creating columns with the same names
+                    (and databases along with tables).
+                </p>
+                </section>
+                <section id="RVquery">
+                    <h1>RVquery</h1>
+                    <p>
+                        One of the main ideas of the RapidVault was to abandon original SQL, along with other languages
+                        like PRQL, GraphQL or WebAssembly e.t.c. RVquery is actually derived from the SQL, but it is
+                        processed a little differently. The project aims to moderately move away from the similarity to SQL,
+                        but for now the keywords are almost identical.
+                    </p>
+                    <p>
+                        It is worth mentioning that the query won't display any results if processed incorrectly
+                        ( there were errors during evaluation ).
+                    </p>
+                    <h2>Operation table</h2>
+                    <p>
+                        Let's start with the concept of the <i>operation table</i>. The query is <i>built gradually</i>, which
+                        means that every instruction is evaluated line by line. The database emulates a new table,
+                        on which the operating query is processed. For example:
+                    </p>
+<pre><code>SELECT any_table_name;</code></pre>
+                    <p>will display the full content of <i>table_name</i>. Then by adding</p>
+<pre><code>SELECT any_table_name;
+JOIN any_table_name.id_column LEFT id another_table;</code></pre>
+                    <p>
+                        it will show two tables joined. In fact, the first instruction copies original table to
+                        the operating one, and then the second instruction appends columns from the specified table
+                        (and changes their names).
+                    </p>
+                    <p>
+                        The <code>JOIN</code> instruction uses first column from already existing table (operating table), thus it
+                        already has changed name, while after <code>LEFT</code> there is a raw column name with table separated by space.
+                        If this seems confusing for now, it will be described in more detail later.
+                    </p>
+                    <h2>Expressions</h2>
+                    <p>
+                        For now, due to the simplicity of implementation, RVquery uses RPN (Reverse Polish Notation).
+                        This means that <code>WHERE</code> instruction creates a stack on which the operands and operators
+                        will be pushed. It will be explained later in <a href="#expressions">'Expressions'</a> section.
+                    </p>
+                </section>
+                <section id="operating-queries">
+                    <h1>Operating queries</h1>
+                    <p>
+                        Operating queries are such instructions, that do not affect database's tables
+                        at all (also check copying properties of <code>SELECT</code> and <code>JOIN</code>).
+                        They use only operating table to process the query.
+                    </p>
+                    <h2>SELECT</h2>
+                    <p>
+                        First thing to do while building a query is to establish a starting table.
+                        It flushes the operating table, deleting previous' query results, and copies
+                        a given table (specified in the database the query is processed) to operating table.
+                    </p>
+<pre><code>SELECT table;</code></pre>
+                    <p>It will return an error if the specified table doesn't exist or there were no arguments provided.</p>
+                    <h2>JOIN</h2>
+                    <p>For now, there are two types of joins.</p>
+                    <img src="operating_queries_join.png"/>
+                    <p>The full instruction scheme looks like this</p>
+<pre><code>JOIN main_table_name.key_column RELATION key_column other_table;</code></pre>
+                    <p>Where <code>main_table.key_column</code> refers to a column inside
+                    operating table, and <code>key_column</code> refers to a column from <code>other_table</code>.
+                    The <code>RELATION</code> keyword refers to</p>
+                    <ul>
+                        <li>
+                            <code>LEFT</code> - all records from the left (operating) table and the matched
+                            records from the right (specified) based on provided key columns.
+                        </li>
+                        <li>
+                            <code>RIGHT</code> - all records from the right (specified) table and the matched
+                            records from the left (operating) based on provided key columns.
+                        </li>
+                    </ul>
+                    <p>
+                        Let's say that we have <code>users</code> and <code>cities</code> tables.
+                        First one has <code>city</code> column, and the second has <code>id</code> column,
+                        thus they will be used as our key columns.
+                    </p>
+<pre><code>SELECT users;
+JOIN users.city LEFT id cities;</code></pre>
+                    <p>
+                        Table <code>cities</code> has a <code>country</code> column. We can append the
+                        <code>countries</code> table (by <code>id</code> column) to the recently processed operating
+                        table using
+                    </p>
+<pre><code>JOIN cities.country LEFT id countries;</code></pre>
+                    <p>For these tables</p>
+<pre><code>
+    o------------o---------------o------------o    o-----------o-------------o----------------o    o--------------o----------------o
+    | users.name | users.surname | users.city |    | cities.id | cities.name | cities.country |    | countries.id | countries.name |
+    +------------+---------------+------------+    +-----------+-------------+----------------+    +--------------+----------------+
+    | Krzysztof  | Luczka        | 0          |    | 0         | Poznan      | 1              |    | 0            | Belgium        |
+    +------------+---------------+------------+    +-----------+-------------+----------------+    +--------------+----------------+
+    | Herkules   | Poirot        | 2          |    | 1         | New York    | 3              |    | 1            | Poland         |
+    +------------+---------------+------------+    +-----------+-------------+----------------+    +--------------+----------------+
+    | Tony       | Stark         | 1          |    | 2         | Spa         | 0              |
+    +------------+---------------+------------+    +-----------+-------------+----------------+
+    | Jack       | Sparrow       | 3          |
+    +------------+---------------+------------+
+</code></pre>
+                    <p>the result should look like this</p>
+<pre><code>
+    o------------o---------------o-------------o----------------o
+    | users.name | users.surname | cities.name | countries.name |
+    +------------+---------------+-------------+----------------+
+    | Krzysztof  | Luczka        | Poznan      | Poland         |
+    +------------+---------------+-------------+----------------+
+    | Herkules   | Poirot        | Spa         | Belgium        |
+    +------------+---------------+-------------+----------------+
+    | Tony       | Stark         | New York    | 0              |
+    +------------+---------------+-------------+----------------+
+    | Jack       | Sparrow       | 0           | Belgium        |
+    +------------+---------------+-------------+----------------+
+</code></pre>
+                    <p>Let's analize these</p>
+                    <ol>
+                        <li>The first join merges <code>users</code> with <code>cities</code>.</li>
+                        <li>There is no city defined for Sparrow, thus the zero is inserted.</li>
+                        <li>The second join merges <code>cities</code> with <code>countries</code>.</li>
+                        <li>There is no country for New York, thus the zero is inserted.</li>
+                        <li>
+                            Because of the Sparrow's zero inserted in <code>cities.name</code>, there
+                            is "Belgium" inserted (its index is also equal to 0).
+                        </li>
+                        <li>Note, that there are no key columns - query automatically omits them.</li>
+                    </ol>
+                    <p>
+                        There is no prevention for this behaviour in pre-release 1.0, so the users
+                        are advised to carefully design their databases.
+                    </p>
+                    <p>
+                        This instruction will return an error when the starting table wasn't established,
+                        the columns' or tables' names are invalid, there were not enough arguments or
+                        there was an unexpected instruction call (invalid relation type).
+                    </p>
+                    <h2>ALIAS</h2>
+                    <p>If we want to make any column name more pleasurable to the eye, we can rename it.</p>
+<pre><code>ALIAS column_name new_column_name;</code></pre>
+                    <p>
+                        This instruction will return an error when the column's name was invalid or
+                        there were not enough arguments.
+                    </p>
+                    <h2>PICK</h2>
+                    <p>If further evaluations or results need only selected columns, use</p>
+<pre><code>PICK column_name1 column_name2 column_name3 ...;</code></pre>
+                    <p>
+                        It discards every column other than specified from the operating table.
+                        This instruction takes any amount of arguments, and returns no error when
+                        any column's name is invalid. However it returns an error when given
+                        no arguments.
+                    </p>
+                    <h2>WHERE</h2>
+                    <p>Whenever we want to select only specified rows, we will use</p>
+<pre><code>WHERE <i>expression;</i></code></pre>
+                    <p>
+                        For each row in the operating table it calculates the result, that usually
+                        should be represented by <i>true</i> or <i>false</i> values (in fact,
+                        <i>false</i> is equal to zero, and <i>true</i> is anything else).
+                        If the expression is evaluated to be <i>false</i>, the row is discarded.
+                        Correct use of this instruction is explained in <a href="#expressions">'Expressions'</a> section.
+                    </p>
+                    <p>
+                        It returns an error when the starting table wasn't established or there were not
+                        enough arguments. Additionally, it returns a warning whenever there was
+                        a type mixup (comparing string to number e.t.c.) or division by zero.
+                    </p>
+                    <h2>PUSH</h2>
+                    <p>Sometimes there is a need to insert a new row just for the operation table. To do so, use</p>
+<pre><code>PUSH value1 value2 value3 ...;</code></pre>
+                    <p>
+                        It creates a new row in the operation table, and whenever there are
+                        given less values than columns, it will set them to zero.
+                        This instruction takes any amount of arguments, and returns an error
+                        when given no arguments.
+                    </p>
+                    <p></p>
+                </section>
+                <section id="manipulating-queries">
+                    <h1>Manipulating queries</h1>
+                    <p>
+                        Manipulating queries are such instructions, that affect database's tables.
+                        They are used to design databases, tables and their content.
+                    </p>
+                    <h2>INSERT</h2>
+                    <p>To insert a new row to a specified table, use</p>
+<pre><code>INSERT table_name value1 value2 value3 ...;</code></pre>
+                    <p>
+                        It creates a new row in the specified table, and whenever there are
+                        given less values than columns, it will set them to zero.
+                        This instruction takes any amount of arguments, and returns an error
+                        when given no arguments or the table names is invalid.
+                    </p>
+                    <h2>CREATE</h2>
+                    <h3>CREATE TABLE</h3>
+                    <p>To create an empty table with specified name, use</p>
+<pre><code>CREATE TABLE table_name;</code></pre>
+                    <h3>CREATE COLUMNS</h3>
+                    <p>To add new columns to an existing table, use</p>
+<pre><code>CREATE COLUMNS table_name column_name1 column_name2 column_name3 ...;</code></pre>
+                    <p>
+                        The <code>CREATE</code> instruction will return an error when table's name
+                        is invalid, there were not enough arguments or there was an unexpected
+                        instruction call (invalid instance type).
+                    </p>
+                </section>
+                <section id="expressions">
+                    <h1>Expressions</h1>
+                    <h2>Understanding stack</h2>
+                    <p>Expressions in RVquery for some might be a hard nut to crack. But let's hop right into them.</p>
+<pre><code>WHERE cities.inhabitants 1000 > cities.region "Wielkopolska" == &&;</code></pre>
+                    <p>
+                        For someone, who never had touched a topic of inverse notation, this might look totally unreadable
+                        and abstract. Normally, the expression would look like this
+                    </p>
+<pre><code>(cities.inhabitants > 1000 && cities.region == "Wielkopolska")</code></pre>
+                    <p>
+                        This looks more readable, now we know that we will be searching for cities that have more than a thousand
+                        inhabitants and are located in the Wielkopolska.
+                    </p>
+                    <p>
+                        But for now due, to the implementation simplicity, <code>WHERE</code> uses <i>Reverse Polish Notation</i>,
+                        sometimes called <i>the postfix notation</i>. It was created by an Australian scientist Charles Hamblin,
+                        and named to honour the original <i>Polish Notation</i> (<i>the prefix notation</i>) invented by a Polish
+                        scientist Jan Łukasiewicz.
+                    </p>
+                    <p>
+                        <code>WHERE</code> instruction operates on a stack - every operand is pushed to the stack, and then when
+                        occuring an operator, it gets the top two values and pushes their caluclated value. Let's say
+                        that we're currently at a row that describes a city with 1500 inhabitants and is located in Świętokrzyskie.
+                        For this row, instruction will swap <code>cities.inhabitants</code> with 1500 and <code>cities.region</code>
+                        with "Świętokrzyskie".
+                    </p>
+<pre><code>1500 1000 > "Świętokrzyskie" "Wielkopolska" == &&</code></pre>
+                    <p>So let's evaluate. This is an empty stack.</p>
+                    <ol>
+<pre><code>[                  ,                  ,                  ,                  ]</code></pre>
+                        <li>At first we push two values - 1500 and 1000</li>
+<pre><code>[       1500       ,       1000       ,                  ,                  ]</code></pre>
+                        <li>Next, we're at <code>&gt</code> operator, so we need to check whether the older value is bigger than
+                            the younger, and return a proper boolean. In this case 1500 is bigger than 1000, so</li>
+<pre><code>[       true       ,                  ,                  ,                  ]</code></pre>
+                        <li>Now we're pushing the "Świętokrzyskie" and "Wielkopolska" on the stack.</li>
+<pre><code>[       true       , "Świętokrzyskie" ,  "Wielkopolska"  ,                  ]</code></pre>
+                        <li>Similarly, we compare the two top values, the older and younger one, and return the proper evaluation.</li>
+<pre><code>[       true       ,       false      ,                  ,                  ]</code></pre>
+                        <li>The last operator is <code>&&</code>, so we evaluate this with our <code>true</code> and <code>false</code>.</li>
+<pre><code>[       false      ,                  ,                  ,                  ]</code></pre>
+                    </ol>
+                    <p>
+                        Quick conclusion - this row does not match our expression, that means it will be discarded.
+                        Same process is done to every row in an operation table, to eliminate the inconsonant rows.
+                    </p>
+                    <h2>Strings and numbers</h2>
+                    <p>
+                        Due to the RapidVault properties, there is a possibility to evaluate expressions when the operands
+                        are strings. Mathematical operators do not go with strings, thus, RapidVault defines behaviours to
+                        handle these possibilities:
+                        <ul>
+                            <li>string &lt=&gt number
+                                <ul>
+                                    <li><code>+</code> operator will treat any number like a string and will concatenate it to the second operand</li>
+                                    <li>any other operator will replace string with its length</li>
+                                </ul>
+                            </li>
+                            <li>string &lt=&gt string
+                                <ul>
+                                    <li><code>+</code> will concatenate strings</li>
+                                    <li><code>==</code> and <code>!=</code> will compare true strings' values</li>
+                                    <li>any other operator will replace strings with their lengths</li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </p>
+                    <h2>Limitations</h2>
+                    <p>
+                        Currently, RVquery supports <code>+</code>, <code>-</code>, <code>*</code>, <code>/</code>, <code>%</code>,
+                        <code>+</code>, <code>+</code>, <code>&lt</code>, <code>&lt=</code>, <code>&gt</code>, <code>&gt=</code>,
+                        <code>==</code> and <code>!=</code> operators.
+                    </p>
+                </section>
+                <section id="errors-and-warnings">
+                    <h1>Errors and warnings</h1>
+                    <p>
+                        Whenever an error occurs during query processing, it disables the result display. To view the errors,
+                        use database's error handler.
+                    </p>
+<pre><code>rv::database db;
+db.rvquery( /* some query */ );
+db.check.print_errors();</code></pre>
+                    <p>
+                        Built-in class <code>rv::error_handler check;</code> is cleared every query call. It catches every
+                        issue and the instruction at which it was observed. The same goes with warnings, except they do not stop
+                        the query from processing, and the result is forced.
+                    </p>
+<pre><code>db.check.print_warnings();</code></pre>
+                    <h2>Errors</h2>
+                    Currently there are 6 different types of errors:
+                    <ul>
+                        <li>
+                            <code>rv::ERROR_TYPE::INVALID_EXPRESSION_FORMAT</code>
+                            <ul>
+                                <li>stack doesn't have any value</li>
+                                <li>stack has too many values</li>
+                                <li>invalid operator</li>
+                                <li>invalid operand</li>
+                                <li>any other issue with <code>WHERE</code> instruction</li>
+                            </ul>
+                        </li>
+                        <li>
+                            <code>rv::ERROR_TYPE::INVALID_COLUMN_NAME</code>
+                            <ul>
+                                <li>column does not exist in the database</li>
+                                <li>column's name has a typo</li>
+                                <li>column's name didn't match the rules</li>
+                                <li>column's name didn't include its table name followed by a dot</li>
+                            </ul>
+                        </li>
+                        <li>
+                            <code>rv::ERROR_TYPE::INVALID_TABLE_NAME</code>
+                            <ul>
+                                <li>table does not exist in the database</li>
+                                <li>table's name has a typo</li>
+                                <li>table's name didn't match the rules</li>
+                            </ul>
+                        </li>
+                        <li>
+                            <code>rv::ERROR_TYPE::NOT_ENOUGH_ARGUMENTS</code>
+                            <ul>
+                                <li>an instruction takes more arguments</li>
+                                <li>a semicolon in wrong place</li>
+                                <li>any other type of typo in query</li>
+                            </ul>
+                        </li>
+                        <li>
+                            <code>rv::ERROR_TYPE::NO_STARTING_TABLE</code>
+                            <ul>
+                                <li>did not use the <code>SELECT</code> instruction</li>
+                                <li>operating table has no columns</li>
+                            </ul>
+                        </li>
+                        <li>
+                            <code>rv::ERROR_TYPE::INVALID_INSTRUCTION</code>
+                            <ul>
+                                <li>non existing instruction or a typo</li>
+                                <li>invalid relationship in <code>JOIN</code></li>
+                                <li>invalid instance in <code>CREATE</code></li>
+                            </ul>
+                        </li>
+                    </ul>
+                    <h2>Warnings</h2>
+                    Currently there are 2 different types of warnings:
+                    <ul>
+                        <li>
+                            <code>rv::WARNING_TYPE::DIVISION_BY_ZERO</code>
+                            <ul>
+                                <li>division by non existing or empty row</li>
+                                <li>division by zero value</li>
+                            </ul>
+                        </li>
+                        <li>
+                            <code>rv::WARNING_TYPE::TYPES_MIXUP</code>
+                            <ul>
+                                <li>comparing a number to a string</li>
+                                <li>doing math operators on strings</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </section>
+                <section id="development-plans">
+                    <h1>Development plans</h1>
+                    The list of features that are planned to be implemented until next release:
+                    <ul>
+                        <li><code>DELETE</code> and <code>UPDATE</code> manipulating queries</li>
+                        <li>
+                            <code>DISTINCT</code>, <code>ASCENDING</code>, <code>DESCENDING</code>,
+                            <code>SUM</code>, <code>AVG</code>, <code>MIN</code> and
+                            <code>MAX</code> queries
+                        </li>
+                        <li>
+                            <code>LEFT_DIFF</code>, <code>SYM_DIFF</code>, <code>RIGHT_DIFF</code>,
+                            <code>INTERSECTION</code> and <code>UNION</code> relationship types
+                        </li>
+                        <img src="development_plans_joins.png"/>
+                        <li><code>PUSH ROW</code> and <code>PUSH COLUMNS</code> distinction</li>
+                        <li>Regular expressions for <code>WHERE</code> instruction</li>
+                        <li>Bitshift operators (<code>&lt&lt</code> and <code>&gt&gt</code>) support</li>
+                        <li><code>%</code> operator for floating point numbers</li>
+                        <li>Implement database saving (including autosave) and loading</li>
+                        <li>Migrating from SQL databases to RapidVault</li>
+                        <li>Raports</li>
+                    </ul>
+                </section>
+                <section id="contributors">
+                    <h1>Contributors</h1>
+                    This project has no other contributors yet. This documentation is current
+                    until March 1, 2024 and describes the RapidVault pre-release 1.0 version.
+<pre>
+    MIT License
+
+    Copyright (c) 2024, Krzysztof Łuczka
+    
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
+    
+    The above copyright notice and this permission notice shall be included in all
+    copies or substantial portions of the Software.
+    
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    SOFTWARE.    
+</pre>
+                </section>
+            </article>
+        </div>
+    </body>
+</html>
