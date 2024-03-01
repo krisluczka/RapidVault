@@ -1,5 +1,5 @@
 #include "database.h"
-#define isOperator(token) (token == "+" || token == "-" || token == "*" || token == "%" || token == "/" || token == "&&" || token == "||" || token == "<" || token == "<=" || token == ">" || token == ">=" || token == "==" || token == "!=" )
+#define isOperator(token) (token == "+" || token == "-" || token == "*" || token == "%" || token == "/" || token == "&&" || token == "||" || token == "<" || token == "<=" || token == ">" || token == ">=" || token == "==" || token == "!=" || token == "<<" || token == ">>" || token == "|" || token == "&" || token == "^")
 
 namespace rv {
     cell_data database::evaluate_operator( cell_data* A, cell_data* B, std::string token ) {
@@ -54,10 +54,10 @@ namespace rv {
             else if ( a_string && !b_string ) if ( b != 0 ) result = as.length() / b; else { evaluation_division_warning = true; return NAN; }
             else                              if ( b != 0 ) result = a / b; else { evaluation_division_warning = true; return NAN; }
         } else if ( token == "%" ) {
-            if ( a_string && b_string )       if ( bs.length() != 0 ) result = (int_fast64_t)as.length() % (int_fast64_t)bs.length(); else { evaluation_division_warning = true; return NAN; }
-            else if ( !a_string && b_string ) if ( bs.length() != 0 ) result = (int_fast64_t)a % (int_fast64_t)bs.length(); else { evaluation_division_warning = true; return NAN; }
-            else if ( a_string && !b_string ) if ( b != 0 ) result = (int_fast64_t)as.length() % (int_fast64_t)b; else { evaluation_division_warning = true; return NAN; }
-            else                              if ( b != 0 ) result = (int_fast64_t)a % (int_fast64_t)b; else { evaluation_division_warning = true; return NAN; }
+            if ( a_string && b_string )       if ( bs.length() != 0 ) result = modulo( as.length(), bs.length() ); else { evaluation_division_warning = true; return NAN; }
+            else if ( !a_string && b_string ) if ( bs.length() != 0 ) result = modulo( a, bs.length() ); else { evaluation_division_warning = true; return NAN; }
+            else if ( a_string && !b_string ) if ( b != 0 ) result = modulo( as.length(), b ); else { evaluation_division_warning = true; return NAN; }
+            else                              if ( b != 0 ) result = modulo( a, b ); else { evaluation_division_warning = true; return NAN; }
         } else if ( token == "&&" ) {
             if ( a_string && b_string )       result = as.length() && bs.length();
             else if ( !a_string && b_string ) result = a && bs.length();
@@ -98,10 +98,41 @@ namespace rv {
             else if ( !a_string && b_string ) result = a != bs.length();
             else if ( a_string && !b_string ) result = as.length() != b;
             else                              result = a != b;
+        } else if ( token == "<<" ) {
+            if ( a_string && b_string )       result = int_fast64_t( as.length() << bs.length() );
+            else if ( !a_string && b_string ) result = int_fast64_t( int_fast64_t( a ) << bs.length() );
+            else if ( a_string && !b_string ) result = int_fast64_t( as.length() << int_fast64_t( b ) );
+            else                              result = int_fast64_t( a ) << int_fast64_t( b );
+        } else if ( token == ">>" ) {
+            if ( a_string && b_string )       result = int_fast64_t( as.length() >> bs.length() );
+            else if ( !a_string && b_string ) result = int_fast64_t( int_fast64_t( a ) >> bs.length() );
+            else if ( a_string && !b_string ) result = int_fast64_t( as.length() >> int_fast64_t( b ) );
+            else                              result = int_fast64_t( a ) >> int_fast64_t( b );
+        } else if ( token == "|" ) {
+            if ( a_string && b_string )       result = int_fast64_t( as.length() | bs.length() );
+            else if ( !a_string && b_string ) result = int_fast64_t( int_fast64_t( a ) | bs.length() );
+            else if ( a_string && !b_string ) result = int_fast64_t( as.length() | int_fast64_t( b ) );
+            else                              result = int_fast64_t( a ) | int_fast64_t( b );
+        } else if ( token == "&" ) {
+            if ( a_string && b_string )       result = int_fast64_t( as.length() & bs.length() );
+            else if ( !a_string && b_string ) result = int_fast64_t( int_fast64_t( a ) & bs.length() );
+            else if ( a_string && !b_string ) result = int_fast64_t( as.length() & int_fast64_t( b ) );
+            else                              result = int_fast64_t( a ) & int_fast64_t( b );
+        } else if ( token == "^" ) {
+            if ( a_string && b_string )       result = int_fast64_t( as.length() ^ bs.length() );
+            else if ( !a_string && b_string ) result = int_fast64_t( int_fast64_t( a ) ^ bs.length() );
+            else if ( a_string && !b_string ) result = int_fast64_t( as.length() ^ int_fast64_t( b ) );
+            else                              result = int_fast64_t( a ) ^ int_fast64_t( b );
         } else {
             evaluation_format_error = true;
             return NAN;
         }
+
+        if ( std::holds_alternative<long double>( result ) )
+            std::cout << std::get<long double>( result ) << std::endl;
+        else if ( std::holds_alternative<int_fast64_t>( result ) )
+            std::cout << std::get<int_fast64_t>( result ) << std::endl;
+        else std::cout << std::get<std::string>( result ) << std::endl;
 
         return result;
     }
@@ -119,6 +150,10 @@ namespace rv {
                 values.push( cd );
             }
 
+            /*
+                isOperator can assign a number and then pass it to a evaluate
+                token to not check it twice
+            */
             // checking if we're dealing with any operator
             else if ( isOperator( *token ) ) {
                 if ( values.size() < 2 ) {
@@ -142,8 +177,6 @@ namespace rv {
             else {
                 // checking if it's a string
                 if ( token->size() > 1 && token->front() == '\"' && token->back() == '\"' ) {
-                    //token->pop_back();
-                    //token->erase( 0, 1 );
                     cell_data* value( new cell_data( token->substr( 1, token->size() - 2 ) ) );
                     values.push( value );
                 } else {

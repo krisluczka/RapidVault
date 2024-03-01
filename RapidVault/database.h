@@ -159,6 +159,14 @@ namespace rv {
 			bool evaluate_expression( std::vector<std::string*>&, uint_fast64_t );
 
 			/*
+				Modulo operator for floating point
+			*/
+			static inline long double modulo( long double a, long double b ) {
+				long double x( std::floor(a / b));
+				return a - b * x;
+			}
+
+			/*
 				The heart of RVquery
 
 				Evaluates the query based on the tokens
