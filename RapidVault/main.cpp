@@ -12,12 +12,12 @@ int main() {
 	db.rvquery( "INSERT other 0 \"Hercule\" \"Poirot\"; INSERT other 2 \"Sherlock\" \"Holmes\"; INSERT other 3 \"Jacques\" \"Clouseau\";" );
 
 	// the same results
-	db.rvquery( "SELECT other; JOIN other.id LEFT_DIFF id test;" );
-	db.rvquery( "SELECT test; JOIN test.id RIGHT_DIFF id other;" );
+	db.rvquery( "SELECT test; JOIN test.id UNION id other;" );
+	db.rvquery( "SELECT other; JOIN other.id UNION id test;" );
 
 	// the same results
-	db.rvquery( "SELECT other; JOIN other.id RIGHT_DIFF id test;" );
-	db.rvquery( "SELECT test; JOIN test.id LEFT_DIFF id other;" );
+	db.rvquery( "SELECT test; JOIN test.id SYM_DIFF id other;" );
+	db.rvquery( "SELECT other; JOIN other.id SYM_DIFF id test;" );
 
 
 	/*rv::database db;
