@@ -3,23 +3,21 @@
 #include "RapidVault.h"
 
 int main() {
-	rv::RapidVault engine;
+	rv::database db;
 
-	/*engine.databases.push_back( new rv::database );
+	db.rvquery( "CREATE TABLE test; CREATE COLUMNS test id name surname;" );
+	db.rvquery( "INSERT test 0 \"Krzysztof\" \"Luczka\"; INSERT test 1 \"Object\" \"Object\";" );
 
-	engine.databases[0]->rename( "baza" );
+	db.rvquery( "CREATE TABLE other; CREATE COLUMNS other id name surname;" );
+	db.rvquery( "INSERT other 0 \"Hercule\" \"Poirot\"; INSERT other 2 \"Sherlock\" \"Holmes\"; INSERT other 3 \"Jacques\" \"Clouseau\";" );
 
-	engine.databases[0]->rvquery( "CREATE TABLE test1; CREATE COLUMNS test1 column1 column2 column3; INSERT test1 10 \"\" -23.2; INSERT test1 -3.14159 \"Krzysztof\" 123214;" );
+	// same results
+	db.rvquery( "SELECT test; JOIN test.id LEFT id other;" );
+	db.rvquery( "SELECT other; JOIN other.id RIGHT id test;" );
 
-	std::cout << engine.save(0);*/
-
-	engine.load( "baza.rv" );
-	engine.databases[0]->display();
-	rv::table* t1 = engine.databases[0]->get_table_pointer( 0 );
-
-	t1->display( rv::DISPLAY_TYPE::NORMAL );
-
-
+	// same results
+	db.rvquery( "SELECT test; JOIN test.id RIGHT id other;" );
+	db.rvquery( "SELECT other; JOIN other.id LEFT id test;" );
 
 
 	/*rv::database db;

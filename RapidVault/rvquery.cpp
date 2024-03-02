@@ -334,18 +334,18 @@ namespace rv {
                         // pointer to any column data
                         column_data* main_cd( nullptr );
                         column_data* other_cd( nullptr );
-
-                        // joining to the left table
+                        // LEFT JOIN
                         if ( *tokens[2] == "LEFT" ) {
-                            // operation table column data
-                            main_cd = std::get<1>( operation_table->data[main_column_index] );
-                            other_cd = std::get<1>( other_table->data[other_column_index] );
                             // merging two tables with new names
                             std::string column_name( "" );
                             for ( column_whole cw : other_table->data ) {
                                 column_name = other_table->name + '.' + std::get<0>( cw );
                                 operation_table->create_column( column_name );
                             }
+
+                            // column data
+                            main_cd = std::get<1>( operation_table->data[main_column_index] );
+                            other_cd = std::get<1>( other_table->data[other_column_index] );
 
                             // checking the specified relation
                             for ( uint_fast64_t mrow( 0 ); mrow < main_rows; ++mrow ) {
@@ -368,7 +368,53 @@ namespace rv {
                             other_column_index += main_column_amount;
                             operation_table->delete_column( other_column_index );
                             operation_table->delete_column( main_column_index );
-                        } else check.push_error( ERROR_TYPE::INVALID_INSTRUCTION, *tokens[2] + " at JOIN" );
+                        }
+                        // RIGHT JOIN
+                        else if ( *tokens[2] == "RIGHT" ) {
+                            // swapping two tables and then performing the LEFT join
+                            table* other( new table );
+                            table* operation( new table );
+                            *other = *operation_table;
+                            *operation = *other_table;
+
+                            // merging two tables with new names
+                            std::string column_name( "" );
+                            for ( uint_fast64_t i( 0 ); i < other_column_amount; ++i )
+                                std::get<0>( operation->data[i] ) = operation->name + "." + std::get<0>( operation->data[i] );
+                            for ( column_whole cw : other->data )
+                                operation->create_column( std::get<0>( cw ) );
+
+                            // column data
+                            main_cd = std::get<1>( operation->data[other_column_index] );
+                            other_cd = std::get<1>( other->data[main_column_index] );
+
+                            // checking the specified relation
+                            for ( uint_fast64_t mrow( 0 ); mrow < other_rows; ++mrow ) {
+                                for ( uint_fast64_t orow( 0 ); orow < main_rows; ++orow ) {
+                                    // if there is a match
+                                    if ( *main_cd->at( mrow ) == *other_cd->at( orow ) ) {
+                                        // copy the values to the main table
+                                        for ( uint_fast64_t col( 0 ); col < main_column_amount; ++col ) {
+                                            main_cd = std::get<1>( operation->data[other_column_amount + col] );
+                                            other_cd = std::get<1>( other->data[col] );
+                                            *main_cd->at( mrow ) = *other_cd->at( orow );
+                                        }
+                                        // switching back to the compared columns
+                                        main_cd = std::get<1>( operation->data[other_column_index] );
+                                        other_cd = std::get<1>( other->data[main_column_index] );
+                                    }
+                                }
+                            }
+                            // deleting the columns on which the JOIN was based
+                            other_column_index += main_column_amount;
+                            operation->delete_column( other_column_index );
+                            operation->delete_column( main_column_index );
+
+                            // swapping the tables
+                            *operation_table = *operation;
+                            delete other;
+                            delete operation;
+                        } else check.push_error(ERROR_TYPE::INVALID_INSTRUCTION, *tokens[2] + " at JOIN");
                     } else check.push_error( ERROR_TYPE::INVALID_COLUMN_NAME, "JOIN" );
                 } else check.push_error( ERROR_TYPE::INVALID_TABLE_NAME, "JOIN" );
             } else check.push_error( ERROR_TYPE::NO_STARTING_TABLE, "JOIN" );
