@@ -18,8 +18,8 @@ namespace rv {
 	};
 
 	class error_handler {
+		friend class database;
 		public:
-			friend class database;
 			error_handler();
 			~error_handler();
 

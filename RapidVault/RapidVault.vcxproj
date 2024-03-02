@@ -132,6 +132,7 @@
     <ClCompile Include="database.cpp" />
     <ClCompile Include="error_handler.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="RapidVault.cpp" />
     <ClCompile Include="rvquery.cpp" />
     <ClCompile Include="table.cpp" />
   </ItemGroup>

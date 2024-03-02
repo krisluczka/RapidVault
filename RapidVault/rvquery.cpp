@@ -183,7 +183,7 @@ namespace rv {
                     // checking if the column exists with given name exists
                     uint_fast64_t index( operation_table->get_column_index( *token ) );
                     if ( index != NULL64_INDEX ) {
-                        cell_data* value( new cell_data( operation_table->get_row( row, index ) ) );
+                        cell_data* value( new cell_data( operation_table->get_cell( row, index ) ) );
                         values.push( value );
                     } else {
                         evaluation_format_error = true;
@@ -489,13 +489,13 @@ namespace rv {
                 // i didn't come up with better solution (to do for later)
                 if ( iss >> data_float && (iss.clear(), iss.seekg( 0 ), iss >> data_int) ) {
                     if ( data_float == data_int ) {
-                        operation_table->change_row( row, i, data_int );
+                        operation_table->change_cell( row, i, data_int );
                     } else {
-                        operation_table->change_row( row, i, data_float );
+                        operation_table->change_cell( row, i, data_float );
                     }
                 } else {
                     *tokens[i] = tokens[i]->substr( 1, tokens[i]->length() - 2 );
-                    operation_table->change_row( row, i, *tokens[i] );
+                    operation_table->change_cell( row, i, *tokens[i] );
                 }
             }
         } else check.push_error( ERROR_TYPE::NOT_ENOUGH_ARGUMENTS, "PUSH" );
@@ -525,13 +525,13 @@ namespace rv {
                     // i didn't come up with better solution (to do for later)
                     if ( iss >> data_float && (iss.clear(), iss.seekg( 0 ), iss >> data_int) ) {
                         if ( data_float == data_int ) {
-                            t->change_row( row, i, data_int );
+                            t->change_cell( row, i, data_int );
                         } else {
-                            t->change_row( row, i, data_float );
+                            t->change_cell( row, i, data_float );
                         }
                     } else {
                         *tokens[i] = tokens[i]->substr( 1, tokens[i]->length() - 2 );
-                        t->change_row( row, i, *tokens[i] );
+                        t->change_cell( row, i, *tokens[i] );
                     }
                 }
             } else check.push_error( ERROR_TYPE::INVALID_TABLE_NAME, "INSERT" );

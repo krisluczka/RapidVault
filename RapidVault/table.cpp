@@ -172,7 +172,7 @@ namespace rv {
 		} else return NULL64_INDEX;
 	}
 
-	void table::change_row( uint_fast64_t index, uint_fast64_t identifier, cell_data d ) {
+	void table::change_cell( uint_fast64_t index, uint_fast64_t identifier, cell_data d ) {
 		if ( data.size() ) {
 			// checking the amount of rows (based on first column)
 			column_data* cd( std::get<1>( data[0] ) );
@@ -186,7 +186,7 @@ namespace rv {
 		}
 	}
 
-	void table::change_row( uint_fast64_t index, std::string identifier, cell_data d ) {
+	void table::change_cell( uint_fast64_t index, std::string identifier, cell_data d ) {
 		uint_fast64_t identi( get_column_index( identifier ) );
 		if ( data.size() ) {
 			// checking the amount of rows (based on first column)
@@ -201,7 +201,7 @@ namespace rv {
 		}
 	}
 
-	cell_data table::get_row( uint_fast64_t index, uint_fast64_t identifier ) {
+	cell_data table::get_cell( uint_fast64_t index, uint_fast64_t identifier ) {
 		cell_data d( 0 );
 		if ( data.size() ) {
 			// checking the amount of rows (based on first column)

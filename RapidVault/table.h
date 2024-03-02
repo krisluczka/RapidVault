@@ -30,6 +30,7 @@ namespace rv {
 	typedef std::vector<column_whole> table_data;
 
 	class table {
+		friend class RapidVault;
 		friend class database;
 		public:
 			table( std::string table_name ) : name( table_name ) {};
@@ -94,13 +95,13 @@ namespace rv {
 			/*
 				Changes values of given row
 			*/
-			void change_row( uint_fast64_t, uint_fast64_t, cell_data );
-			void change_row( uint_fast64_t, std::string, cell_data );
+			void change_cell( uint_fast64_t, uint_fast64_t, cell_data );
+			void change_cell( uint_fast64_t, std::string, cell_data );
 
 			/*
 				Returns a row value
 			*/
-			cell_data get_row( uint_fast64_t, uint_fast64_t );
+			cell_data get_cell( uint_fast64_t, uint_fast64_t );
 
 			/*
 				Deletes a row

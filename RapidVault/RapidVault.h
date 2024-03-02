@@ -28,6 +28,39 @@
 
 */
 #pragma once
+#include <fstream>
 #include "database.h"
 #include "table.h"
 #include "error_handler.h"
+
+namespace rv {
+	class RapidVault {
+		public:
+			//RapidVault();
+			//~RapidVault();
+
+
+
+			/*
+				Loading a database
+			*/
+			bool load( std::string );
+
+			/*
+				Saving a database
+			*/
+			bool save( uint_fast64_t );
+
+		//private:
+			std::vector<database*> databases;
+
+			/*
+				Saves table data to binary file
+			*/
+			bool save_table( std::ofstream*, table* );
+			/*
+				Reads a binary file and puts data in a table
+			*/
+			bool load_table( std::ifstream*, table* );
+	};
+}
