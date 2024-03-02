@@ -505,18 +505,17 @@ namespace rv {
                             // row deleting flag
                             bool to_delete( false );
 
-                            // swapping two tables and then performing the LEFT join
+                            // swapping two tables and then performing the LEFT DIFFERENCE join
                             table* other( new table );
-                            table* operation( new table );
                             *other = *operation_table;
-                            *operation = *other_table;
+                            *operation_table = *other_table;
 
                             // renaming columns
                             for ( uint_fast64_t i( 0 ); i < other_column_amount; ++i )
-                                std::get<0>( operation->data[i] ) = operation->name + "." + std::get<0>( operation->data[i] );
+                                std::get<0>( operation_table->data[i] ) = operation_table->name + "." + std::get<0>( operation_table->data[i] );
 
                             // column data
-                            main_cd = std::get<1>( operation->data[other_column_index] );
+                            main_cd = std::get<1>( operation_table->data[other_column_index] );
                             other_cd = std::get<1>( other->data[main_column_index] );
 
                             // checking the specified relation
@@ -537,12 +536,13 @@ namespace rv {
                                     }
                                 }
                                 // if there were no matches, delete the row
-                                if ( to_delete ) operation->delete_row( mrow );
+                                if ( to_delete ) operation_table->delete_row( mrow );
                             }
                             // deleting the columns on which the JOIN was based
-                            operation->delete_column( main_column_index );
+                            operation_table->delete_column( main_column_index );
 
-                            *operation_table = *operation;
+                            // be free, memory!
+                            delete other;
                         }
                         else check.push_error(ERROR_TYPE::INVALID_INSTRUCTION, *tokens[2] + " at JOIN");
                     } else check.push_error( ERROR_TYPE::INVALID_COLUMN_NAME, "JOIN" );
