@@ -11,13 +11,9 @@ int main() {
 	db.rvquery( "CREATE TABLE other; CREATE COLUMNS other id name surname;" );
 	db.rvquery( "INSERT other 0 \"Hercule\" \"Poirot\"; INSERT other 2 \"Sherlock\" \"Holmes\"; INSERT other 3 \"Jacques\" \"Clouseau\";" );
 
-	// same results
-	db.rvquery( "SELECT test; JOIN test.id LEFT id other;" );
-	db.rvquery( "SELECT other; JOIN other.id RIGHT id test;" );
-
-	// same results
-	db.rvquery( "SELECT test; JOIN test.id RIGHT id other;" );
-	db.rvquery( "SELECT other; JOIN other.id LEFT id test;" );
+	// the same results
+	db.rvquery( "SELECT other; JOIN other.id INTERSECT id test;" );
+	db.rvquery( "SELECT test; JOIN test.id INTERSECT id other;" );
 
 
 	/*rv::database db;

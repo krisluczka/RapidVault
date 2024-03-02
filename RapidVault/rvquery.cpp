@@ -334,8 +334,59 @@ namespace rv {
                         // pointer to any column data
                         column_data* main_cd( nullptr );
                         column_data* other_cd( nullptr );
-                        // LEFT JOIN
-                        if ( *tokens[2] == "LEFT" ) {
+
+                        // INTERSECTION join
+                        if ( *tokens[2] == "INTERSECT" ) {
+                            // row deleting flag
+                            bool to_delete( false );
+
+                            // merging two tables with new names
+                            std::string column_name( "" );
+                            for ( column_whole cw : other_table->data ) {
+                                column_name = other_table->name + '.' + std::get<0>( cw );
+                                operation_table->create_column( column_name );
+                            }
+
+                            // column data
+                            main_cd = std::get<1>( operation_table->data[main_column_index] );
+                            other_cd = std::get<1>( other_table->data[other_column_index] );
+
+                            // checking the specified relation
+                            for ( uint_fast64_t mrow( 0 ); mrow < main_rows; ++mrow ) {
+                                // if the previous row was deleted, we deincrement the amount
+                                if ( to_delete ) {
+                                    --mrow;
+                                    main_rows--;
+                                } else to_delete = true;
+
+                                for ( uint_fast64_t orow( 0 ); orow < other_rows; ++orow ) {
+                                    // if there is a match
+                                    if ( *main_cd->at( mrow ) == *other_cd->at( orow ) ) {
+                                        // copy the values to the main table
+                                        for ( uint_fast64_t col( 0 ); col < other_column_amount; ++col ) {
+                                            main_cd = std::get<1>( operation_table->data[main_column_amount + col] );
+                                            other_cd = std::get<1>( other_table->data[col] );
+                                            *main_cd->at( mrow ) = *other_cd->at( orow );
+                                        }
+                                        // switching back to the compared columns
+                                        main_cd = std::get<1>( operation_table->data[main_column_index] );
+                                        other_cd = std::get<1>( other_table->data[other_column_index] );
+                                        
+                                        // we found the match!
+                                        to_delete = false;
+                                        break;
+                                    }
+                                }
+                                // if there were no matches, delete the row
+                                if ( to_delete ) operation_table->delete_row( mrow );
+                            }
+                            // deleting the columns on which the JOIN was based
+                            other_column_index += main_column_amount;
+                            operation_table->delete_column( other_column_index );
+                            operation_table->delete_column( main_column_index );
+                        } 
+                        // LEFT join
+                        else if ( *tokens[2] == "LEFT" ) {
                             // merging two tables with new names
                             std::string column_name( "" );
                             for ( column_whole cw : other_table->data ) {
@@ -361,6 +412,7 @@ namespace rv {
                                         // switching back to the compared columns
                                         main_cd = std::get<1>( operation_table->data[main_column_index] );
                                         other_cd = std::get<1>( other_table->data[other_column_index] );
+                                        break;
                                     }
                                 }
                             }
@@ -369,7 +421,7 @@ namespace rv {
                             operation_table->delete_column( other_column_index );
                             operation_table->delete_column( main_column_index );
                         }
-                        // RIGHT JOIN
+                        // RIGHT join
                         else if ( *tokens[2] == "RIGHT" ) {
                             // swapping two tables and then performing the LEFT join
                             table* other( new table );
@@ -402,6 +454,7 @@ namespace rv {
                                         // switching back to the compared columns
                                         main_cd = std::get<1>( operation->data[other_column_index] );
                                         other_cd = std::get<1>( other->data[main_column_index] );
+                                        break;
                                     }
                                 }
                             }

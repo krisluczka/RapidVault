@@ -227,7 +227,7 @@ namespace rv {
 			if ( index < rows ) {
 				cell_data* dc;
 				for ( column_whole cw : data ) {
-					cd = std::get<1>( data[0] );
+					cd = std::get<1>( cw );
 					dc = cd->at( index );
 					delete dc;
 					cd->erase( cd->begin() + index );

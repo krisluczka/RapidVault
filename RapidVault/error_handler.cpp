@@ -14,7 +14,7 @@ namespace rv {
 
 	void error_handler::print_errors() {
 		if ( errors.size() ) std::cerr << "Query failed! " << errors.size() << " errors in total!\n";
-		else std::cerr << "Query run successfully.\n";
+		else std::cerr << "Query processed successfully.\n";
 		for ( uint_fast64_t i( 0 ); i < errors.size(); ++i ) {
 			std::cerr << "    " << *errors_ids[i] << ": ";
 			switch ( errors[i] ) {
