@@ -356,7 +356,7 @@ namespace rv {
                                 // if the previous row was deleted, we deincrement the amount
                                 if ( to_delete ) {
                                     --mrow;
-                                    main_rows--;
+                                    --main_rows;
                                 } else to_delete = true;
 
                                 for ( uint_fast64_t orow( 0 ); orow < other_rows; ++orow ) {
@@ -467,7 +467,84 @@ namespace rv {
                             *operation_table = *operation;
                             delete other;
                             delete operation;
-                        } else check.push_error(ERROR_TYPE::INVALID_INSTRUCTION, *tokens[2] + " at JOIN");
+                        }
+                        // LEFT DIFFERENCE join
+                        else if ( *tokens[2] == "LEFT_DIFF" ) {
+                            // row deleting flag
+                            bool to_delete( false );
+
+                            // column data
+                            main_cd = std::get<1>( operation_table->data[main_column_index] );
+                            other_cd = std::get<1>( other_table->data[other_column_index] );
+
+                            // checking the specified relation
+                            for ( uint_fast64_t mrow( 0 ); mrow < main_rows; ++mrow ) {
+                                // if the previous row was deleted, we deincrement the amount
+                                if ( to_delete ) {
+                                    --mrow;
+                                    --main_rows;
+                                    to_delete = false;
+                                }
+
+                                for ( uint_fast64_t orow( 0 ); orow < other_rows; ++orow ) {
+                                    // if there is a match
+                                    if ( *main_cd->at( mrow ) == *other_cd->at( orow ) ) {
+                                        // we found the match!
+                                        to_delete = true;
+                                        break;
+                                    }
+                                }
+                                // if there were no matches, delete the row
+                                if ( to_delete ) operation_table->delete_row( mrow );
+                            }
+                            // deleting the columns on which the JOIN was based
+                            operation_table->delete_column( main_column_index );
+                        }
+                        // RIGHT DIFFERENCE join
+                        else if ( *tokens[2] == "RIGHT_DIFF" ) {
+                            // row deleting flag
+                            bool to_delete( false );
+
+                            // swapping two tables and then performing the LEFT join
+                            table* other( new table );
+                            table* operation( new table );
+                            *other = *operation_table;
+                            *operation = *other_table;
+
+                            // renaming columns
+                            for ( uint_fast64_t i( 0 ); i < other_column_amount; ++i )
+                                std::get<0>( operation->data[i] ) = operation->name + "." + std::get<0>( operation->data[i] );
+
+                            // column data
+                            main_cd = std::get<1>( operation->data[other_column_index] );
+                            other_cd = std::get<1>( other->data[main_column_index] );
+
+                            // checking the specified relation
+                            for ( uint_fast64_t mrow( 0 ); mrow < other_rows; ++mrow ) {
+                                // if the previous row was deleted, we deincrement the amount
+                                if ( to_delete ) {
+                                    --mrow;
+                                    --other_rows;
+                                    to_delete = false;
+                                }
+
+                                for ( uint_fast64_t orow( 0 ); orow < main_rows; ++orow ) {
+                                    // if there is a match
+                                    if ( *main_cd->at( mrow ) == *other_cd->at( orow ) ) {
+                                        // we found the match!
+                                        to_delete = true;
+                                        break;
+                                    }
+                                }
+                                // if there were no matches, delete the row
+                                if ( to_delete ) operation->delete_row( mrow );
+                            }
+                            // deleting the columns on which the JOIN was based
+                            operation->delete_column( main_column_index );
+
+                            *operation_table = *operation;
+                        }
+                        else check.push_error(ERROR_TYPE::INVALID_INSTRUCTION, *tokens[2] + " at JOIN");
                     } else check.push_error( ERROR_TYPE::INVALID_COLUMN_NAME, "JOIN" );
                 } else check.push_error( ERROR_TYPE::INVALID_TABLE_NAME, "JOIN" );
             } else check.push_error( ERROR_TYPE::NO_STARTING_TABLE, "JOIN" );
