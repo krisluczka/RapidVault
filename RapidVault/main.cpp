@@ -26,8 +26,11 @@ int main() {
 	db.rvquery( "INSERT countries 0 \"Belgium\"" );
 	db.rvquery( "INSERT countries 1 \"Poland\"" );
 
-	db.rvquery( "SELECT users; JOIN users.city LEFT id cities; " );
-	db.rvquery( "SELECT cities; JOIN cities.id RIGHT city users; " );
+	db.rvquery( "SELECT users; JOIN users.city SYM_DIFF id cities; " );
+	db.rvquery( "SELECT cities; JOIN cities.id SYM_DIFF city users; " );
+	std::cout << "\n\n\n";
+	db.rvquery( "SELECT cities; JOIN cities.country SYM_DIFF id countries; " );
+	db.rvquery( "SELECT countries; JOIN countries.id SYM_DIFF country cities; " );
 
 
 	/*rv::database db;
