@@ -884,33 +884,45 @@ namespace rv {
 
     // to rewrite later
     void database::PUSH_query( std::vector <std::string*>& tokens, const uint_fast64_t tokens_size ) {
-        if ( tokens_size > 1 ) {
+        if ( tokens_size > 2 ) {
             // deleting the "PUSH"
             delete tokens[0];
             tokens.erase( tokens.begin() );
-
-            // code stolen from INSERT
-            // creating a new row and filling them with given parameters
-            uint_fast64_t row( operation_table->create_row() );
-            for ( uint_fast64_t i( 0 ); i < operation_table->data.size(); ++i ) {
-                // if we moved too fast
-                if ( i >= tokens_size - 1 ) break;
-                // converting given token to a number or string
-                std::istringstream iss( *tokens[i] );
-                int_fast64_t data_int;
-                long double data_float;
-                // i didn't come up with better solution (to do for later)
-                if ( iss >> data_float && (iss.clear(), iss.seekg( 0 ), iss >> data_int) ) {
-                    if ( data_float == data_int ) {
-                        operation_table->change_cell( row, i, data_int );
+            
+            if ( *tokens[0] == "ROW" ) {
+                // deleting the "ROW"
+                delete tokens[0];
+                tokens.erase( tokens.begin() );
+                // creating a new row and filling them with given parameters
+                uint_fast64_t row( operation_table->create_row() );
+                for ( uint_fast64_t i( 0 ); i < operation_table->data.size(); ++i ) {
+                    // if we moved too fast
+                    if ( i >= tokens_size - 1 ) break;
+                    // converting given token to a number or string
+                    std::istringstream iss( *tokens[i] );
+                    int_fast64_t data_int;
+                    long double data_float;
+                    // i didn't come up with better solution (to do for later)
+                    if ( iss >> data_float && (iss.clear(), iss.seekg( 0 ), iss >> data_int) ) {
+                        if ( data_float == data_int ) {
+                            operation_table->change_cell( row, i, data_int );
+                        } else {
+                            operation_table->change_cell( row, i, data_float );
+                        }
                     } else {
-                        operation_table->change_cell( row, i, data_float );
+                        *tokens[i] = tokens[i]->substr( 1, tokens[i]->length() - 2 );
+                        operation_table->change_cell( row, i, *tokens[i] );
                     }
-                } else {
-                    *tokens[i] = tokens[i]->substr( 1, tokens[i]->length() - 2 );
-                    operation_table->change_cell( row, i, *tokens[i] );
                 }
-            }
+            } else if ( *tokens[0] == "COLUMNS" ) {
+                // deleting the "COLUMNS"
+                delete tokens[0];
+                tokens.erase( tokens.begin() );
+                for ( std::string* token : tokens ) {
+                    if ( operation_table->create_column( *token ) == NULL64_INDEX )
+                        check.push_warning( WARNING_TYPE::FORCED_NAME, "PUSH" );
+                }
+            } else check.push_error( ERROR_TYPE::INVALID_INSTRUCTION, *tokens[0] + "at PUSH" );
         } else check.push_error( ERROR_TYPE::NOT_ENOUGH_ARGUMENTS, "PUSH" );
     }
 
@@ -966,6 +978,7 @@ namespace rv {
                     delete tokens[0];
                     delete tokens[1];
                     delete tokens[2];
+                    // ??
                     tokens.erase( tokens.begin() );
                     tokens.erase( tokens.begin() );
                     tokens.erase( tokens.begin() );
