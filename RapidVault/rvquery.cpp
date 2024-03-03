@@ -320,6 +320,7 @@ namespace rv {
             else if ( *tokens[0] == "PUSH" )        PUSH_query( tokens, tokens_size );
             else if ( *tokens[0] == "INSERT" )      INSERT_query( tokens, tokens_size );
             else if ( *tokens[0] == "CREATE" )      CREATE_query( tokens, tokens_size );
+            else if ( *tokens[0] == "SAVE" )        SAVE_query( tokens, tokens_size );
             //else if ( *tokens[0] == "DISTINCT" )    DISTINCT_query( tokens, tokens_size );
             // invalid instruction
             else check.push_error( ERROR_TYPE::INVALID_INSTRUCTION, *tokens[0] );
@@ -991,6 +992,23 @@ namespace rv {
                 } else check.push_error( ERROR_TYPE::NOT_ENOUGH_ARGUMENTS, "CREATE" );
             } else check.push_error( ERROR_TYPE::INVALID_INSTRUCTION, *tokens[1] + " at CREATE" );
         } else check.push_error( ERROR_TYPE::NOT_ENOUGH_ARGUMENTS, "CREATE" );
+    }
+
+    void database::SAVE_query( std::vector<std::string*>& tokens, const uint_fast64_t tokens_size ) {
+        if ( tokens_size > 2 ) {
+            // static save of table
+            if ( *tokens[1] == "STATIC" ) {
+                uint_fast64_t index( create_table( *tokens[2] ) );
+                // if table exists, swap indexes and push a warning
+                if ( index == NULL64_INDEX ) {
+                    check.push_warning( WARNING_TYPE::FORCED_NAME, "SAVE" );
+                    index = tables.size() - 1;
+                }
+                // copying the table with its name
+                operation_table->name = tables[index]->name;
+                *tables[index] = *operation_table;
+            } else check.push_error( ERROR_TYPE::INVALID_INSTRUCTION, *tokens[1] + " at SAVE" );
+        } else check.push_error( ERROR_TYPE::NOT_ENOUGH_ARGUMENTS, "SAVE" );
     }
 
     void database::DISTINCT_query( std::vector<std::string*>& tokens, const uint_fast64_t tokens_size ) {

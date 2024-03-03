@@ -220,6 +220,7 @@ namespace rv {
 
 			void INSERT_query( std::vector<std::string*>&, const uint_fast64_t );
 			void CREATE_query( std::vector<std::string*>&, const uint_fast64_t );
+			void SAVE_query( std::vector<std::string*>&, const uint_fast64_t );
 			
 			void DISTINCT_query( std::vector<std::string*>&, const uint_fast64_t );
 	};
