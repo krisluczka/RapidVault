@@ -369,6 +369,10 @@ namespace rv {
                             // row deleting flag
                             bool to_delete( false );
 
+                            // symmetric helper values
+                            uint_fast64_t index( 0 );
+                            uint_fast64_t occurrences( 0 );
+
                             // merging two tables with new names
                             std::string column_name( "" );
                             for ( column_whole cw : other_table->data ) {
@@ -383,6 +387,9 @@ namespace rv {
 
                             // checking the specified relation
                             for ( uint_fast64_t mrow( 0 ); mrow < main_rows; ++mrow ) {
+                                // resetting the row occurrences counter
+                                occurrences = 0;
+
                                 // if the previous row was deleted, we deincrement the amount
                                 if ( to_delete ) {
                                     --mrow;
@@ -392,22 +399,44 @@ namespace rv {
                                 for ( uint_fast64_t orow( 0 ); orow < other_rows; ++orow ) {
                                     // if there is a match
                                     if ( *main_cd->at( mrow ) == *other_cd->at( orow ) ) {
-                                        // copy the values to the main table
-                                        for ( uint_fast64_t col( 0 ); col < other_column_amount; ++col ) {
-                                            main_cd = std::get<1>( operation_table->data[main_column_amount + col] );
-                                            other_cd = std::get<1>( other_table->data[col] );
-                                            *main_cd->at( mrow ) = *other_cd->at( orow );
+                                        // we found the match!
+                                        to_delete = false;
+
+                                        // if it was found only once, we create a new row and operate on it
+                                        if ( occurrences > 0 ) {
+                                            index = operation_table->create_row();
+
+                                            // copying the row
+                                            for ( uint_fast64_t col( 0 ); col < main_column_amount; ++col ) {
+                                                main_cd = std::get<1>( operation_table->data[col] );
+                                                *main_cd->at( index ) = *main_cd->at( mrow );
+                                            }
+                                            // copy the values to the main table
+                                            for ( uint_fast64_t col( 0 ); col < other_column_amount; ++col ) {
+                                                main_cd = std::get<1>( operation_table->data[main_column_amount + col] );
+                                                other_cd = std::get<1>( other_table->data[col] );
+                                                *main_cd->at( index ) = *other_cd->at( orow );
+                                            }
+                                        }
+                                        // otherwise, we operate on the original row
+                                        else {
+                                            // copy the values to the main table
+                                            for ( uint_fast64_t col( 0 ); col < other_column_amount; ++col ) {
+                                                main_cd = std::get<1>( operation_table->data[main_column_amount + col] );
+                                                other_cd = std::get<1>( other_table->data[col] );
+                                                *main_cd->at( mrow ) = *other_cd->at( orow );
+                                            }
                                         }
 
                                         // switching back to the compared columns
                                         main_cd = std::get<1>( operation_table->data[main_column_index] );
                                         other_cd = std::get<1>( other_table->data[other_column_index] );
-                                        
-                                        // we found the match!
-                                        to_delete = false;
-                                        break;
+
+                                        // incrementing the occurence count
+                                        occurrences++;
                                     }
                                 }
+
                                 // if there were no matches, delete the row
                                 if ( to_delete ) operation_table->delete_row( mrow );
                             }
@@ -582,7 +611,7 @@ namespace rv {
                                     --mrow;
                                     --main_rows;
                                     to_delete = false;
-                                }
+                                } else;
 
                                 for ( uint_fast64_t orow( 0 ); orow < other_rows; ++orow ) {
                                     // if there is a match
@@ -592,6 +621,7 @@ namespace rv {
                                         break;
                                     }
                                 }
+
                                 // if there were no matches, delete the row
                                 if ( to_delete ) operation_table->delete_row( mrow );
                             }
@@ -624,7 +654,7 @@ namespace rv {
                                     --mrow;
                                     --other_rows;
                                     to_delete = false;
-                                }
+                                } else;
 
                                 for ( uint_fast64_t orow( 0 ); orow < main_rows; ++orow ) {
                                     // if there is a match
@@ -638,9 +668,10 @@ namespace rv {
                                 // if there were no matches, delete the row
                                 if ( to_delete ) operation_table->delete_row( mrow );
                             }
-                            // deleting the columns on which the JOIN was based
-                            operation_table->delete_column( main_column_index );
 
+                            // deleting the columns on which the JOIN was based
+                            operation_table->delete_column( other_column_index );
+                            
                             // be free, memory!
                             delete other;
                         }
@@ -649,16 +680,12 @@ namespace rv {
                             // row deleting flag
                             bool to_delete( false );
 
-                            // checking if a given row was usen
-                            std::vector<bool> other_used;
-                            other_used.resize( other_rows, false );
-
                             // merging two tables with new names
                             std::string column_name( "" );
                             for ( column_whole cw : other_table->data ) {
                                 column_name = other_table->name + '.' + std::get<0>( cw );
                                 if ( operation_table->create_column( column_name ) == NULL64_INDEX )
-                                    check.push_warning( WARNING_TYPE::FORCED_NAME, "SYM_DIFF at JOIN" );
+                                    check.push_warning( WARNING_TYPE::FORCED_NAME, "INTERSECT at JOIN" );
                             }
 
                             // column data
@@ -672,45 +699,29 @@ namespace rv {
                                     --mrow;
                                     --main_rows;
                                     to_delete = false;
-                                }
+                                } else;
 
                                 for ( uint_fast64_t orow( 0 ); orow < other_rows; ++orow ) {
                                     // if there is a match
                                     if ( *main_cd->at( mrow ) == *other_cd->at( orow ) ) {
+                                        // we found the match!
+                                        to_delete = true;
+
                                         // copy the values to the main table
                                         for ( uint_fast64_t col( 0 ); col < other_column_amount; ++col ) {
                                             main_cd = std::get<1>( operation_table->data[main_column_amount + col] );
                                             other_cd = std::get<1>( other_table->data[col] );
                                             *main_cd->at( mrow ) = *other_cd->at( orow );
                                         }
+
                                         // switching back to the compared columns
                                         main_cd = std::get<1>( operation_table->data[main_column_index] );
                                         other_cd = std::get<1>( other_table->data[other_column_index] );
-
-                                        // the row was used, thus we note it
-                                        other_used[orow] = true;
-
-                                        // we found the match!
-                                        to_delete = true;
-                                        break;
                                     }
                                 }
+
                                 // if there were no matches, delete the row
                                 if ( to_delete ) operation_table->delete_row( mrow );
-                            }
-
-                            // pushing the forgotten rows
-                            uint_fast64_t forgotten_row( 0 );
-                            for ( uint_fast64_t orow( 0 ); orow < other_rows; ++orow ) {
-                                if ( !other_used[orow] ) {
-                                    // copy the values to the main table
-                                    forgotten_row = operation_table->create_row();
-                                    for ( uint_fast64_t col( 0 ); col < other_column_amount; ++col ) {
-                                        main_cd = std::get<1>( operation_table->data[main_column_amount + col] );
-                                        other_cd = std::get<1>( other_table->data[col] );
-                                        *main_cd->at( forgotten_row ) = *other_cd->at( orow );
-                                    }
-                                }
                             }
 
                             // deleting the columns on which the JOIN was based
