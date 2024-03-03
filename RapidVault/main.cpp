@@ -11,13 +11,7 @@ int main() {
 	db.rvquery( "CREATE TABLE other; CREATE COLUMNS other id name surname;" );
 	db.rvquery( "INSERT other 0 \"Hercule\" \"Poirot\"; INSERT other 2 \"Sherlock\" \"Holmes\"; INSERT other 3 \"Jacques\" \"Clouseau\";" );
 
-	// the same results
-	db.rvquery( "SELECT test; JOIN test.id UNION id other;" );
-	db.rvquery( "SELECT other; JOIN other.id UNION id test;" );
-
-	// the same results
-	db.rvquery( "SELECT test; JOIN test.id SYM_DIFF id other;" );
-	db.rvquery( "SELECT other; JOIN other.id SYM_DIFF id test;" );
+	db.rvquery( "SELECT test; WHERE 2 2 % 1 +" );
 
 
 	/*rv::database db;

@@ -1,12 +1,10 @@
 #include "database.h"
-#define isOperator(token) (token == "+" || token == "-" || token == "*" || token == "%" || token == "/" || token == "&&" || token == "||" || token == "<" || token == "<=" || token == ">" || token == ">=" || token == "==" || token == "!=" || token == "<<" || token == ">>" || token == "|" || token == "&" || token == "^")
 
 namespace rv {
-    cell_data database::evaluate_operator( cell_data* A, cell_data* B, std::string token ) {
+    cell_data database::evaluate_operator( cell_data* A, cell_data* B, uint_fast8_t operator_type ) {
         long double a( 0 ), b( 0 );
         std::string as( "" ), bs( "" );
         bool a_string( false ), b_string( false );
-        cell_data result( 0 );
 
         // getting the A
         if ( std::holds_alternative<int_fast64_t>( *A ) ) {
@@ -33,113 +31,148 @@ namespace rv {
             evaluation_mixed_warning = true;
 
         // checking every type of operator
-        if ( token == "+" ) {
-            if ( a_string && b_string )       result = as + bs;
-            else if ( !a_string && b_string ) result = std::to_string( a ) + bs;
-            else if ( a_string && !b_string ) result = as + std::to_string( b );
-            else                              result = a + b;
-        } else if ( token == "-" ) {
-            if ( a_string && b_string )       result = static_cast<int_fast64_t>(as.length() - bs.length());
-            else if ( !a_string && b_string ) result = a - bs.length();
-            else if ( a_string && !b_string ) result = as.length() - b;
-            else                              result = a - b;
-        } else if ( token == "*" ) {
-            if ( a_string && b_string )       result = static_cast<int_fast64_t>(as.length() * bs.length());
-            else if ( !a_string && b_string ) result = a * bs.length();
-            else if ( a_string && !b_string ) result = as.length() * b;
-            else                              result = a * b;
-        } else if ( token == "/" ) {
-            if ( a_string && b_string )       if ( bs.length() != 0 ) result = (long double)as.length() / (long double)bs.length(); else { evaluation_division_warning = true; return NAN; }
-            else if ( !a_string && b_string ) if ( bs.length() != 0 ) result = a / bs.length(); else { evaluation_division_warning = true; return NAN; }
-            else if ( a_string && !b_string ) if ( b != 0 ) result = as.length() / b; else { evaluation_division_warning = true; return NAN; }
-            else                              if ( b != 0 ) result = a / b; else { evaluation_division_warning = true; return NAN; }
-        } else if ( token == "%" ) {
-            if ( a_string && b_string )       if ( bs.length() != 0 ) result = modulo( as.length(), bs.length() ); else { evaluation_division_warning = true; return NAN; }
-            else if ( !a_string && b_string ) if ( bs.length() != 0 ) result = modulo( a, bs.length() ); else { evaluation_division_warning = true; return NAN; }
-            else if ( a_string && !b_string ) if ( b != 0 ) result = modulo( as.length(), b ); else { evaluation_division_warning = true; return NAN; }
-            else                              if ( b != 0 ) result = modulo( a, b ); else { evaluation_division_warning = true; return NAN; }
-        } else if ( token == "&&" ) {
-            if ( a_string && b_string )       result = as.length() && bs.length();
-            else if ( !a_string && b_string ) result = a && bs.length();
-            else if ( a_string && !b_string ) result = as.length() && b;
-            else                              result = a && b;
-        } else if ( token == "||" ) {
-            if ( a_string && b_string )       result = as.length() || bs.length();
-            else if ( !a_string && b_string ) result = a || bs.length();
-            else if ( a_string && !b_string ) result = as.length() || b;
-            else                              result = a || b;
-        } else if ( token == "<" ) {
-            if ( a_string && b_string )       result = as.length() < bs.length();
-            else if ( !a_string && b_string ) result = a < bs.length();
-            else if ( a_string && !b_string ) result = as.length() < b;
-            else                              result = a < b;
-        } else if ( token == "<=" ) {
-            if ( a_string && b_string )       result = as.length() <= bs.length();
-            else if ( !a_string && b_string ) result = a <= bs.length();
-            else if ( a_string && !b_string ) result = as.length() <= b;
-            else                              result = a <= b;
-        } else if ( token == ">" ) {
-            if ( a_string && b_string )       result = as.length() > bs.length();
-            else if ( !a_string && b_string ) result = a > bs.length();
-            else if ( a_string && !b_string ) result = as.length() > b;
-            else                              result = a > b;
-        } else if ( token == ">=" ) {
-            if ( a_string && b_string )       result = as.length() >= bs.length();
-            else if ( !a_string && b_string ) result = a >= bs.length();
-            else if ( a_string && !b_string ) result = as.length() >= b;
-            else                              result = a >= b;
-        } else if ( token == "==" ) {
-            if ( a_string && b_string )       result = as == bs;
-            else if ( !a_string && b_string ) result = a == bs.length();
-            else if ( a_string && !b_string ) result = as.length() == b;
-            else                              result = a == b;
-        } else if ( token == "!=" ) {
-            if ( a_string && b_string )       result = as != bs;
-            else if ( !a_string && b_string ) result = a != bs.length();
-            else if ( a_string && !b_string ) result = as.length() != b;
-            else                              result = a != b;
-        } else if ( token == "<<" ) {
-            if ( a_string && b_string )       result = int_fast64_t( as.length() << bs.length() );
-            else if ( !a_string && b_string ) result = int_fast64_t( int_fast64_t( a ) << bs.length() );
-            else if ( a_string && !b_string ) result = int_fast64_t( as.length() << int_fast64_t( b ) );
-            else                              result = int_fast64_t( a ) << int_fast64_t( b );
-        } else if ( token == ">>" ) {
-            if ( a_string && b_string )       result = int_fast64_t( as.length() >> bs.length() );
-            else if ( !a_string && b_string ) result = int_fast64_t( int_fast64_t( a ) >> bs.length() );
-            else if ( a_string && !b_string ) result = int_fast64_t( as.length() >> int_fast64_t( b ) );
-            else                              result = int_fast64_t( a ) >> int_fast64_t( b );
-        } else if ( token == "|" ) {
-            if ( a_string && b_string )       result = int_fast64_t( as.length() | bs.length() );
-            else if ( !a_string && b_string ) result = int_fast64_t( int_fast64_t( a ) | bs.length() );
-            else if ( a_string && !b_string ) result = int_fast64_t( as.length() | int_fast64_t( b ) );
-            else                              result = int_fast64_t( a ) | int_fast64_t( b );
-        } else if ( token == "&" ) {
-            if ( a_string && b_string )       result = int_fast64_t( as.length() & bs.length() );
-            else if ( !a_string && b_string ) result = int_fast64_t( int_fast64_t( a ) & bs.length() );
-            else if ( a_string && !b_string ) result = int_fast64_t( as.length() & int_fast64_t( b ) );
-            else                              result = int_fast64_t( a ) & int_fast64_t( b );
-        } else if ( token == "^" ) {
-            if ( a_string && b_string )       result = int_fast64_t( as.length() ^ bs.length() );
-            else if ( !a_string && b_string ) result = int_fast64_t( int_fast64_t( a ) ^ bs.length() );
-            else if ( a_string && !b_string ) result = int_fast64_t( as.length() ^ int_fast64_t( b ) );
-            else                              result = int_fast64_t( a ) ^ int_fast64_t( b );
-        } else {
-            evaluation_format_error = true;
-            return NAN;
+        switch ( operator_type ) {
+            // +
+            case 1:
+                if ( a_string && b_string )       return as + bs;
+                else if ( !a_string && b_string ) return std::to_string( a ) + bs;
+                else if ( a_string && !b_string ) return as + std::to_string( b );
+                else                              return a + b;
+                break;
+            // -
+            case 2:
+                if ( a_string && b_string )       return static_cast<int_fast64_t>(as.length() - bs.length());
+                else if ( !a_string && b_string ) return a - bs.length();
+                else if ( a_string && !b_string ) return as.length() - b;
+                else                              return a - b;
+                break;
+            // *
+            case 3:
+                if ( a_string && b_string )       return static_cast<int_fast64_t>(as.length() * bs.length());
+                else if ( !a_string && b_string ) return a * bs.length();
+                else if ( a_string && !b_string ) return as.length() * b;
+                else                              return a * b;
+                break;
+            // /
+            case 4:
+                if ( a_string && b_string )       if ( bs.length() != 0 ) return static_cast<long double>(as.length()) / static_cast<long double>(bs.length()); else { evaluation_division_warning = true; return NAN; }
+                else if ( !a_string && b_string ) if ( bs.length() != 0 ) return a / bs.length(); else { evaluation_division_warning = true; return NAN; }
+                else if ( a_string && !b_string ) if ( b != 0 ) return as.length() / b; else { evaluation_division_warning = true; return NAN; }
+                else                              if ( b != 0 ) return a / b; else { evaluation_division_warning = true; return NAN; }
+                break;
+            // %
+            case 5:
+                if ( a_string && b_string )       if ( bs.length() != 0 ) return modulo( as.length(), bs.length() ); else { evaluation_division_warning = true; return NAN; }
+                else if ( !a_string && b_string ) if ( bs.length() != 0 ) return modulo( a, bs.length() ); else { evaluation_division_warning = true; return NAN; }
+                else if ( a_string && !b_string ) if ( b != 0 ) return modulo( as.length(), b ); else { evaluation_division_warning = true; return NAN; }
+                else                              if ( b != 0 ) return modulo( a, b ); else { evaluation_division_warning = true; return NAN; }
+                break;
+            // &&
+            case 6:
+                if ( a_string && b_string )       return as.length() && bs.length();
+                else if ( !a_string && b_string ) return a && bs.length();
+                else if ( a_string && !b_string ) return as.length() && b;
+                else                              return a && b;
+                break;
+            // ||
+            case 7:
+                if ( a_string && b_string )       return as.length() || bs.length();
+                else if ( !a_string && b_string ) return a || bs.length();
+                else if ( a_string && !b_string ) return as.length() || b;
+                else                              return a || b;
+                break;
+            // <
+            case 8:
+                if ( a_string && b_string )       return as.length() < bs.length();
+                else if ( !a_string && b_string ) return a < bs.length();
+                else if ( a_string && !b_string ) return as.length() < b;
+                else                              return a < b;
+                break;
+            // <=
+            case 9:
+                if ( a_string && b_string )       return as.length() <= bs.length();
+                else if ( !a_string && b_string ) return a <= bs.length();
+                else if ( a_string && !b_string ) return as.length() <= b;
+                else                              return a <= b;
+                break;
+            // >
+            case 10:
+                if ( a_string && b_string )       return as.length() > bs.length();
+                else if ( !a_string && b_string ) return a > bs.length();
+                else if ( a_string && !b_string ) return as.length() > b;
+                else                              return a > b;
+                break;
+            // >=
+            case 11:
+                if ( a_string && b_string )       return as.length() >= bs.length();
+                else if ( !a_string && b_string ) return a >= bs.length();
+                else if ( a_string && !b_string ) return as.length() >= b;
+                else                              return a >= b;
+                break;
+            // ==
+            case 12:
+                if ( a_string && b_string )       return as == bs;
+                else if ( !a_string && b_string ) return a == bs.length();
+                else if ( a_string && !b_string ) return as.length() == b;
+                else                              return a == b;
+                break;
+            // !=
+            case 13:
+                if ( a_string && b_string )       return as != bs;
+                else if ( !a_string && b_string ) return a != bs.length();
+                else if ( a_string && !b_string ) return as.length() != b;
+                else                              return a != b;
+                break;
+            // <<
+            case 14:
+                if ( a_string && b_string )       return static_cast<int_fast64_t>( as.length() << bs.length() );
+                else if ( !a_string && b_string ) return static_cast<int_fast64_t>( static_cast<int_fast64_t>( a ) << bs.length() );
+                else if ( a_string && !b_string ) return static_cast<int_fast64_t>( as.length() << static_cast<int_fast64_t>( b ) );
+                else                              return static_cast<int_fast64_t>( a ) << static_cast<int_fast64_t>( b );
+                break;
+            // >>
+            case 15:
+                if ( a_string && b_string )       return static_cast<int_fast64_t>( as.length() >> bs.length() );
+                else if ( !a_string && b_string ) return static_cast<int_fast64_t>( static_cast<int_fast64_t>( a ) >> bs.length() );
+                else if ( a_string && !b_string ) return static_cast<int_fast64_t>( as.length() >> static_cast<int_fast64_t>( b ) );
+                else                              return static_cast<int_fast64_t>( a ) >> static_cast<int_fast64_t>( b );
+                break;
+            // |
+            case 16:
+                if ( a_string && b_string )       return static_cast<int_fast64_t>( as.length() | bs.length() );
+                else if ( !a_string && b_string ) return static_cast<int_fast64_t>( static_cast<int_fast64_t>( a ) | bs.length() );
+                else if ( a_string && !b_string ) return static_cast<int_fast64_t>( as.length() | static_cast<int_fast64_t>( b ) );
+                else                              return static_cast<int_fast64_t>( a ) | static_cast<int_fast64_t>( b );
+                break;
+            // &
+            case 17:
+                if ( a_string && b_string )       return static_cast<int_fast64_t>( as.length() & bs.length() );
+                else if ( !a_string && b_string ) return static_cast<int_fast64_t>( static_cast<int_fast64_t>( a ) & bs.length() );
+                else if ( a_string && !b_string ) return static_cast<int_fast64_t>( as.length() & static_cast<int_fast64_t>( b ) );
+                else                              return static_cast<int_fast64_t>( a ) & static_cast<int_fast64_t>( b );
+                break;
+            // ^
+            case 18:
+                if ( a_string && b_string )       return static_cast<int_fast64_t>( as.length() ^ bs.length() );
+                else if ( !a_string && b_string ) return static_cast<int_fast64_t>( static_cast<int_fast64_t>( a ) ^ bs.length() );
+                else if ( a_string && !b_string ) return static_cast<int_fast64_t>( as.length() ^ static_cast<int_fast64_t>( b ) );
+                else                              return static_cast<int_fast64_t>( a ) ^ static_cast<int_fast64_t>( b );
+                break;
+            // other
+            default:
+                evaluation_format_error = true;
+                return NAN;
+                break;
         }
 
-        if ( std::holds_alternative<long double>( result ) )
-            std::cout << std::get<long double>( result ) << std::endl;
-        else if ( std::holds_alternative<int_fast64_t>( result ) )
-            std::cout << std::get<int_fast64_t>( result ) << std::endl;
-        else std::cout << std::get<std::string>( result ) << std::endl;
-
-        return result;
+        // if nothing was returned yet, it must have been an error, thus NaN
+        return NAN;
     }
 
     bool database::evaluate_expression( std::vector<std::string*>& tokens, uint_fast64_t row ) {
         std::stack<cell_data*> values;
         bool result( true );
+        uint_fast8_t operator_number( 0 );
 
         //for ( std::string *token : tokens ) {
         for ( uint_fast64_t i( 0 ); i < tokens.size(); ++i ) {
@@ -150,12 +183,8 @@ namespace rv {
                 values.push( cd );
             }
 
-            /*
-                isOperator can assign a number and then pass it to a evaluate
-                token to not check it twice
-            */
             // checking if we're dealing with any operator
-            else if ( isOperator( *token ) ) {
+            else if ( operator_number = is_operator( token ) ) {
                 if ( values.size() < 2 ) {
                     evaluation_format_error = true;
                     return NAN;
@@ -166,7 +195,7 @@ namespace rv {
                 values.pop();
 
                 // evaluating the operator
-                cell_data* value( new cell_data( evaluate_operator( A, B, *token ) ) );
+                cell_data* value( new cell_data( evaluate_operator( A, B, operator_number ) ) );
                 values.push( value );
 
                 // !!!

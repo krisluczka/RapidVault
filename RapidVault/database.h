@@ -148,10 +148,35 @@ namespace rv {
 			bool evaluation_mixed_warning;
 
 			/*
+				Operator number assigning
+			*/
+			static inline uint_fast8_t is_operator( std::string* token ) {
+					 if ( *token == "+" )   return 1;
+				else if ( *token == "-" )   return 2;
+				else if ( *token == "*" )   return 3;
+				else if ( *token == "/" )   return 4;
+				else if ( *token == "%" )   return 5;
+				else if ( *token == "&&" )  return 6;
+				else if ( *token == "||" )  return 7;
+				else if ( *token == "<" )   return 8;
+				else if ( *token == "<=" )  return 9;
+				else if ( *token == ">" )   return 10;
+				else if ( *token == ">=" )  return 11;
+				else if ( *token == "==" )  return 12;
+				else if ( *token == "!=" )  return 13;
+				else if ( *token == "<<" )  return 14;
+				else if ( *token == ">>" )  return 15;
+				else if ( *token == "|" )   return 16;
+				else if ( *token == "&" )   return 17;
+				else if ( *token == "^" )   return 18;
+				else                        return 0;
+			}
+
+			/*
 				Calculates an cell_data value
 				Returns a proper cell_data
 			*/
-			cell_data evaluate_operator( cell_data*, cell_data*, std::string );
+			cell_data evaluate_operator( cell_data*, cell_data*, uint_fast8_t );
 
 			/*
 				Evaluates mathematical/logical expressions for WHERE directive
