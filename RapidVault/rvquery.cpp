@@ -373,7 +373,8 @@ namespace rv {
                             std::string column_name( "" );
                             for ( column_whole cw : other_table->data ) {
                                 column_name = other_table->name + '.' + std::get<0>( cw );
-                                operation_table->create_column( column_name );
+                                if ( operation_table->create_column( column_name ) == NULL64_INDEX )
+                                    check.push_warning( WARNING_TYPE::FORCED_NAME, "INTERSECT at JOIN" );
                             }
 
                             // column data
@@ -422,7 +423,8 @@ namespace rv {
                             std::string column_name( "" );
                             for ( column_whole cw : other_table->data ) {
                                 column_name = other_table->name + '.' + std::get<0>( cw );
-                                operation_table->create_column( column_name );
+                                if ( operation_table->create_column( column_name ) == NULL64_INDEX )
+                                    check.push_warning( WARNING_TYPE::FORCED_NAME, "LEFT at JOIN" );
                             }
 
                             // column data
@@ -467,7 +469,9 @@ namespace rv {
                             for ( uint_fast64_t i( 0 ); i < other_column_amount; ++i )
                                 std::get<0>( operation->data[i] ) = operation->name + "." + std::get<0>( operation->data[i] );
                             for ( column_whole cw : other->data )
-                                operation->create_column( std::get<0>( cw ) );
+                                // forcing
+                                if ( operation->create_column( std::get<0>( cw ) ) == NULL64_INDEX )
+                                    check.push_warning( WARNING_TYPE::FORCED_NAME, "RIGHT at CREATE" );
 
                             // column data
                             main_cd = std::get<1>( operation->data[other_column_index] );
@@ -513,7 +517,8 @@ namespace rv {
                             std::string column_name( "" );
                             for ( column_whole cw : other_table->data ) {
                                 column_name = other_table->name + '.' + std::get<0>( cw );
-                                operation_table->create_column( column_name );
+                                if ( operation_table->create_column( column_name ) == NULL64_INDEX )
+                                    check.push_warning( WARNING_TYPE::FORCED_NAME, "UNION at JOIN" );
                             }
 
                             // column data
@@ -652,7 +657,8 @@ namespace rv {
                             std::string column_name( "" );
                             for ( column_whole cw : other_table->data ) {
                                 column_name = other_table->name + '.' + std::get<0>( cw );
-                                operation_table->create_column( column_name );
+                                if ( operation_table->create_column( column_name ) == NULL64_INDEX )
+                                    check.push_warning( WARNING_TYPE::FORCED_NAME, "SYM_DIFF at JOIN" );
                             }
 
                             // column data
@@ -886,7 +892,9 @@ namespace rv {
         if ( tokens_size > 1 ) {
             if ( *tokens[1] == "TABLE" ) {
                 if ( tokens_size > 2 ) {
-                    create_table( *tokens[2] );
+                    // checking if a given table was already created
+                    if ( create_table( *tokens[2] ) == NULL64_INDEX )
+                        check.push_warning( WARNING_TYPE::FORCED_NAME, "CREATE" );
                 } else check.push_error( ERROR_TYPE::NOT_ENOUGH_ARGUMENTS, "CREATE" );
             } else if ( *tokens[1] == "COLUMNS" ) {
                 if ( tokens_size > 3 ) {
@@ -900,7 +908,8 @@ namespace rv {
                     tokens.erase( tokens.begin() );
                     if ( index != NULL64_INDEX ) {
                         for ( std::string* token : tokens ) {
-                            tables[index]->create_column( *token );
+                            if ( tables[index]->create_column( *token ) == NULL64_INDEX )
+                                check.push_warning( WARNING_TYPE::FORCED_NAME, "CREATE" );
                         }
                     } else check.push_error( ERROR_TYPE::INVALID_TABLE_NAME, "CREATE" );
                 } else check.push_error( ERROR_TYPE::NOT_ENOUGH_ARGUMENTS, "CREATE" );

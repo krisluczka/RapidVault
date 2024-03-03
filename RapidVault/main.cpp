@@ -11,7 +11,10 @@ int main() {
 	db.rvquery( "CREATE TABLE other; CREATE COLUMNS other id name surname;" );
 	db.rvquery( "INSERT other 0 \"Hercule\" \"Poirot\"; INSERT other 2 \"Sherlock\" \"Holmes\"; INSERT other 3 \"Jacques\" \"Clouseau\";" );
 
-	db.rvquery( "SELECT test; WHERE 2 2 % 1 +" );
+	db.rvquery( "SELECT other; JOIN other.id UNION id other;" );
+	db.check.print_warnings();
+	db.rvquery( "CREATE TABLE other; CREATE TABLE other; CREATE COLUMNS other-- test; SELECT other--;" );
+	db.check.print_warnings();
 
 
 	/*rv::database db;

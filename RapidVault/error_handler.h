@@ -15,6 +15,7 @@ namespace rv {
 	enum WARNING_TYPE : uint_fast8_t {
 		DIVISION_BY_ZERO,
 		TYPES_MIXUP,
+		FORCED_NAME,
 	};
 
 	class error_handler {

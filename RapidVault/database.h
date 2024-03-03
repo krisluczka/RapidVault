@@ -53,6 +53,15 @@ namespace rv {
 				Returns its index
 			*/
 			inline uint_fast64_t create_table( std::string name ) {
+				// checking the names
+				for ( table* t : tables ) {
+					// if such table already exists
+					if ( t->name == name ) {
+						// force it
+						create_table( name + "-" );
+						return NULL64_INDEX;
+					}
+				}
 				table* t( new table );
 				t->name = name;
 				tables.push_back( t );

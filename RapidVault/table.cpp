@@ -94,6 +94,15 @@ namespace rv {
 	}
 
 	uint_fast64_t table::create_column( std::string name, uint_fast64_t index ) {
+		// checking the names
+		for ( column_whole cw : data ) {
+			// if such column already exists
+			if ( std::get<0>( cw ) == name ) {
+				// force it
+				create_column( name + "-", index );
+				return NULL64_INDEX;
+			}
+		}
 		/*
 			We need to check how many empty cells we need to create.
 			Whenever we're creating a new column to a table with
