@@ -26,8 +26,8 @@ int main() {
 	db.rvquery( "INSERT countries 0 \"Belgium\"" );
 	db.rvquery( "INSERT countries 1 \"Poland\"" );
 
-	db.rvquery( "SELECT users; JOIN users.city UNION id cities; " );
-	db.rvquery( "SELECT cities; JOIN cities.id UNION city users; " );
+	db.rvquery( "SELECT users; JOIN users.city LEFT id cities; " );
+	db.rvquery( "SELECT cities; JOIN cities.id RIGHT city users; " );
 
 
 	/*rv::database db;

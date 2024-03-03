@@ -500,7 +500,7 @@ namespace rv {
                             for ( column_whole cw : other->data )
                                 // forcing
                                 if ( operation->create_column( std::get<0>( cw ) ) == NULL64_INDEX )
-                                    check.push_warning( WARNING_TYPE::FORCED_NAME, "RIGHT at CREATE" );
+                                    check.push_warning( WARNING_TYPE::FORCED_NAME, "RIGHT at JOIN" );
 
                             // column data
                             main_cd = std::get<1>( operation->data[other_column_index] );
@@ -527,9 +527,10 @@ namespace rv {
                             }
 
                             // deleting the columns on which the JOIN was based
-                            other_column_index += main_column_amount;
-                            operation->delete_column( other_column_index );
+                            main_column_index += other_column_amount;
                             operation->delete_column( main_column_index );
+                            operation->delete_column( other_column_index );
+                            
 
                             // swapping the tables
                             *operation_table = *operation;
