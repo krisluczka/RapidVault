@@ -26,11 +26,9 @@ int main() {
 	db.rvquery( "INSERT countries 0 \"Belgium\"" );
 	db.rvquery( "INSERT countries 1 \"Poland\"" );
 
-	db.rvquery( "SELECT countries; JOIN countries.id SYM_DIFF country cities; PUSH ROW 0 \"test\" -123.2; PUSH COLUMNS test.column; \
-		ALIAS countries.name Country; ALIAS cities.id CityID; ALIAS cities.name City; ALIAS test.column NewColumn; SAVE STATIC users;" );
-	db.check.print_warnings();
-	db.rvquery( "SELECT users-; PUSH ROW 2 1 0 -1; ALIAS users-.Country Country; ALIAS users-.CityID CityID; ALIAS users-.City City; ALIAS users-.NewColumn OldColumn; SAVE STATIC test_table;" );
-	db.rvquery( "SELECT test_table; " );
+	db.rvquery( "DELETE COLUMNS cities;" );
+	db.check.print_errors();
+	db.display();
 
 	/*rv::database db;
 

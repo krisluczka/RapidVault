@@ -320,6 +320,7 @@ namespace rv {
             else if ( *tokens[0] == "PUSH" )        PUSH_query( tokens, tokens_size );
             else if ( *tokens[0] == "INSERT" )      INSERT_query( tokens, tokens_size );
             else if ( *tokens[0] == "CREATE" )      CREATE_query( tokens, tokens_size );
+            else if ( *tokens[0] == "DELETE" )      DELETE_query( tokens, tokens_size );
             else if ( *tokens[0] == "SAVE" )        SAVE_query( tokens, tokens_size );
             //else if ( *tokens[0] == "DISTINCT" )    DISTINCT_query( tokens, tokens_size );
             // invalid instruction
@@ -992,6 +993,38 @@ namespace rv {
                 } else check.push_error( ERROR_TYPE::NOT_ENOUGH_ARGUMENTS, "CREATE" );
             } else check.push_error( ERROR_TYPE::INVALID_INSTRUCTION, *tokens[1] + " at CREATE" );
         } else check.push_error( ERROR_TYPE::NOT_ENOUGH_ARGUMENTS, "CREATE" );
+    }
+
+    void database::DELETE_query( std::vector<std::string*>& tokens, const uint_fast64_t tokens_size ) {
+        if ( tokens_size > 2 ) {
+            if ( *tokens[1] == "TABLE" ) {
+                uint_fast64_t index( get_table_index( *tokens[2] ) );
+                if ( index != NULL64_INDEX ) {
+                    delete tables[index];
+                    tables.erase( tables.begin() + index );
+                } else check.push_error( ERROR_TYPE::INVALID_TABLE_NAME, "DELETE" );
+            } else if ( *tokens[1] == "COLUMNS" ) {
+                if ( tokens_size > 3 ) {
+                    uint_fast64_t index( get_table_index( *tokens[2] ) );
+                    uint_fast64_t column( 0 );
+                    delete tokens[0];
+                    delete tokens[1];
+                    delete tokens[2];
+                    // ??
+                    tokens.erase( tokens.begin() );
+                    tokens.erase( tokens.begin() );
+                    tokens.erase( tokens.begin() );
+                    if ( index != NULL64_INDEX ) {
+                        for ( std::string* token : tokens ) {
+                            column = tables[index]->get_column_index( *token );
+                            if ( column != NULL64_INDEX ) {
+                                tables[index]->delete_column( column );
+                            } else check.push_error( ERROR_TYPE::INVALID_COLUMN_NAME, "DELETE" );
+                        }
+                    } else check.push_error( ERROR_TYPE::INVALID_TABLE_NAME, "DELETE" );
+                } else check.push_error( ERROR_TYPE::NOT_ENOUGH_ARGUMENTS, "DELETE" );
+            } else check.push_error( ERROR_TYPE::INVALID_INSTRUCTION, *tokens[1] + " at DELETE" );
+        } else check.push_error( ERROR_TYPE::NOT_ENOUGH_ARGUMENTS, "DELETE" );
     }
 
     void database::SAVE_query( std::vector<std::string*>& tokens, const uint_fast64_t tokens_size ) {
