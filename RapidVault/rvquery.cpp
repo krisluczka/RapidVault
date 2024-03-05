@@ -158,6 +158,13 @@ namespace rv {
                 else if ( a_string && !b_string ) return static_cast<int_fast64_t>( as.length() ^ static_cast<int_fast64_t>( b ) );
                 else                              return static_cast<int_fast64_t>( a ) ^ static_cast<int_fast64_t>( b );
                 break;
+            // regex
+            case 19:
+                if ( a_string && b_string )       return std::regex_match( as, std::regex( bs ) );
+                else if ( !a_string && b_string ) return std::regex_match( std::to_string( a ), std::regex( bs ) );
+                else if ( a_string && !b_string ) return std::regex_match( as, std::regex( std::to_string( b ) ) );
+                else                              return std::regex_match( std::to_string( a ), std::regex( std::to_string( b ) ) );
+                break;
             // other
             default:
                 evaluation_format_error = true;

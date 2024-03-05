@@ -11,6 +11,7 @@
 #include <iomanip>
 #include <stack>
 #include <algorithm>
+#include <regex>
 #include "table.h"
 #include "error_handler.h"
 
@@ -160,25 +161,26 @@ namespace rv {
 				Operator number assigning
 			*/
 			static inline uint_fast8_t is_operator( std::string* token ) {
-					 if ( *token == "+" )   return 1;
-				else if ( *token == "-" )   return 2;
-				else if ( *token == "*" )   return 3;
-				else if ( *token == "/" )   return 4;
-				else if ( *token == "%" )   return 5;
-				else if ( *token == "&&" )  return 6;
-				else if ( *token == "||" )  return 7;
-				else if ( *token == "<" )   return 8;
-				else if ( *token == "<=" )  return 9;
-				else if ( *token == ">" )   return 10;
-				else if ( *token == ">=" )  return 11;
-				else if ( *token == "==" )  return 12;
-				else if ( *token == "!=" )  return 13;
-				else if ( *token == "<<" )  return 14;
-				else if ( *token == ">>" )  return 15;
-				else if ( *token == "|" )   return 16;
-				else if ( *token == "&" )   return 17;
-				else if ( *token == "^" )   return 18;
-				else                        return 0;
+					 if ( *token == "+" )		return 1;
+				else if ( *token == "-" )		return 2;
+				else if ( *token == "*" )		return 3;
+				else if ( *token == "/" )		return 4;
+				else if ( *token == "%" )		return 5;
+				else if ( *token == "&&" )		return 6;
+				else if ( *token == "||" )		return 7;
+				else if ( *token == "<" )		return 8;
+				else if ( *token == "<=" )		return 9;
+				else if ( *token == ">" )		return 10;
+				else if ( *token == ">=" )		return 11;
+				else if ( *token == "==" )		return 12;
+				else if ( *token == "!=" )		return 13;
+				else if ( *token == "<<" )		return 14;
+				else if ( *token == ">>" )		return 15;
+				else if ( *token == "|" )		return 16;
+				else if ( *token == "&" )		return 17;
+				else if ( *token == "^" )		return 18;
+				else if ( *token == "REGEX" )   return 19;
+				else							return 0;
 			}
 
 			/*
