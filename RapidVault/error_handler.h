@@ -16,6 +16,7 @@ namespace rv {
 		DIVISION_BY_ZERO,
 		TYPES_MIXUP,
 		FORCED_NAME,
+		INVALID_REGEX,
 	};
 
 	class error_handler {

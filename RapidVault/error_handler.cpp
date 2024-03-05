@@ -59,6 +59,9 @@ namespace rv {
 				case WARNING_TYPE::FORCED_NAME:
 					std::cerr << "Creating an instance with the same name results in a behavior described in documentation.\n";
 					break;
+				case WARNING_TYPE::INVALID_REGEX:
+					std::cerr << "Invalid regular expression.\n";
+					break;
 				default:
 					std::cerr << "Unexpected warning!\n";
 					break;

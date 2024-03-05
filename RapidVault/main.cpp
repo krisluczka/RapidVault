@@ -26,9 +26,10 @@ int main() {
 	db.rvquery( "INSERT countries 0 \"Belgium\"" );
 	db.rvquery( "INSERT countries 1 \"Poland\"" );
 
-	//db.rvquery( "SELECT users; WHERE users.surname \"(ro)(*)\" REGEX;" );
+	db.rvquery( "SELECT users; WHERE users.surname \"(ro)(*)\" REGEX;" );
+	db.check.print_warnings();
 	db.rvquery( "SELECT users; WHERE users.surname \".*ro.*\" REGEX;" );
-	db.check.print_errors();
+	db.check.print_warnings();
 	db.display();
 
 	/*rv::database db;

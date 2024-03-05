@@ -20,9 +20,9 @@ namespace rv {
 		friend class RapidVault;
 		public:
 			database( std::string database_name ) : name( database_name ), operation_table( nullptr ),
-				evaluation_format_error( false ), evaluation_division_warning( false ), evaluation_mixed_warning( false ) {};
+				evaluation_format_error( false ), evaluation_division_warning( false ), evaluation_mixed_warning( false ), evaluation_regex_warning( false ){};
 			database() : name( "rapidvault_database" ), operation_table( nullptr ), evaluation_format_error( false ),
-				evaluation_division_warning( false ), evaluation_mixed_warning( false ) {};
+				evaluation_division_warning( false ), evaluation_mixed_warning( false ), evaluation_regex_warning( false ) {};
 			~database();
 
 
@@ -156,6 +156,7 @@ namespace rv {
 			bool evaluation_format_error;
 			bool evaluation_division_warning;
 			bool evaluation_mixed_warning;
+			bool evaluation_regex_warning;
 
 			/*
 				Operator number assigning
@@ -194,6 +195,19 @@ namespace rv {
 				Returns boolean type variable
 			*/
 			bool evaluate_expression( std::vector<std::string*>&, uint_fast64_t );
+
+			/*
+				Regular expression validator
+			*/
+			inline std::string validate_regex( const std::string& input ) {
+				try {
+					std::regex regexPattern( input );
+					return input;
+				} catch ( std::regex_error& ) {
+					evaluation_regex_warning = true;
+					return ".*";
+				}
+			}
 
 			/*
 				Modulo operator for floating point

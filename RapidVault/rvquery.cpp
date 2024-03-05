@@ -160,10 +160,10 @@ namespace rv {
                 break;
             // regex
             case 19:
-                if ( a_string && b_string )       return std::regex_match( as, std::regex( bs ) );
-                else if ( !a_string && b_string ) return std::regex_match( std::to_string( a ), std::regex( bs ) );
-                else if ( a_string && !b_string ) return std::regex_match( as, std::regex( std::to_string( b ) ) );
-                else                              return std::regex_match( std::to_string( a ), std::regex( std::to_string( b ) ) );
+                if ( a_string && b_string )       return std::regex_match( as, std::regex( validate_regex( bs ) ) );
+                else if ( !a_string && b_string ) return std::regex_match( std::to_string( a ), std::regex( validate_regex( bs ) ) );
+                else if ( a_string && !b_string ) return std::regex_match( as, std::regex( validate_regex( std::to_string( b ) ) ) );
+                else                              return std::regex_match( std::to_string( a ), std::regex( validate_regex( std::to_string( b ) ) ) );
                 break;
             // other
             default:
@@ -853,6 +853,7 @@ namespace rv {
                 evaluation_format_error = false;
                 evaluation_division_warning = false;
                 evaluation_mixed_warning = false;
+                evaluation_regex_warning = false;
                 // deleting the "WHERE"
                 delete tokens[0];
                 tokens.erase( tokens.begin() );
@@ -887,6 +888,7 @@ namespace rv {
                 */
                 if ( evaluation_division_warning ) check.push_warning( WARNING_TYPE::DIVISION_BY_ZERO, "WHERE" );
                 if ( evaluation_mixed_warning ) check.push_warning( WARNING_TYPE::TYPES_MIXUP, "WHERE" );
+                if ( evaluation_regex_warning ) check.push_warning( WARNING_TYPE::INVALID_REGEX, "WHERE" );
             } else check.push_error( ERROR_TYPE::NO_STARTING_TABLE, "WHERE" );
         } else check.push_error( ERROR_TYPE::NOT_ENOUGH_ARGUMENTS, "WHERE" );
     }
