@@ -88,9 +88,9 @@ namespace rv {
 			*/
 			/*
 				Creates a row (empty)
-				Returns its index
+				Returns index of the last element
 			*/
-			uint_fast64_t create_row();
+			uint_fast64_t create_row( uint_fast64_t amount = 1 );
 
 			/*
 				Changes values of given row

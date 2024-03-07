@@ -955,10 +955,7 @@ namespace rv {
                     uint_fast64_t operation_rows( std::get<1>( operation_table->data[0] )->size() );
                     
                     // creating rows
-                    // i will optimize it i swear
-                    for ( uint_fast64_t i(0); i < rows; ++i) {
-                        operation_table->create_row();
-					}
+                    operation_table->create_row( rows );
 
                     uint_fast64_t operation_column( 0 );
 				    for ( std::string* token : tokens ) {

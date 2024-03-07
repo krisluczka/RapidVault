@@ -166,15 +166,17 @@ namespace rv {
 		return NULL64_INDEX;
 	}
 
-	uint_fast64_t table::create_row() {
+	uint_fast64_t table::create_row( uint_fast64_t amount ) {
 		if ( data.size() ) {
 			column_data* cd( std::get<1>( data[0] ) );
 			cell_data* dc( nullptr );
 			// filling row with zeroes
 			for ( uint_fast64_t column_index( 0 ); column_index < data.size(); ++column_index ) {
-				cd = std::get<1>( data[column_index] );
-				dc = new cell_data( 0 );
-				cd->push_back( dc );
+				for ( uint_fast64_t row_index( 0 ); row_index < amount; ++row_index ) {
+					cd = std::get<1>( data[column_index] );
+					dc = new cell_data( 0 );
+					cd->push_back( dc );
+				}
 			}
 
 			return cd->size() - 1;
