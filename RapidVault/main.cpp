@@ -26,9 +26,7 @@ int main() {
 	db.rvquery( "INSERT countries 0 \"Belgium\"" );
 	db.rvquery( "INSERT countries 1 \"Poland\"" );
 
-	db.rvquery( "SELECT users; WHERE users.surname \"(ro)(*)\" REGEX;" );
-	db.check.print_warnings();
-	db.rvquery( "SELECT users; WHERE users.surname \".*ro.*\" REGEX;" );
+	db.rvquery( "SELECT users; WHERE \"example123\" \"^[A-Za-z]\\w+\" REGEX;" );
 	db.check.print_warnings();
 	db.display();
 
@@ -36,7 +34,7 @@ int main() {
 
 	std::string query;
 
-	std::cout << " RapidVault pre-release 1.0\n";
+	std::cout << " RapidVault pre-release 1.1\n";
 	std::cout << "   made by Krzysztof Luczka\n\n";
 	std::cout << " MIT license 2024\n";
 	std::cout << " github.com/krisluczka/RapidVault\n";

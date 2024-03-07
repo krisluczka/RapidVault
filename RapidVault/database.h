@@ -233,6 +233,7 @@ namespace rv {
 			void PICK_query( std::vector<std::string*>&, const uint_fast64_t );
 			void WHERE_query( std::vector<std::string*>&, const uint_fast64_t );
 			void PUSH_query( std::vector <std::string*>&, const uint_fast64_t );
+			void APPEND_query( std::vector <std::string*>&, const uint_fast64_t );
 
 			void INSERT_query( std::vector<std::string*>&, const uint_fast64_t );
 			void CREATE_query( std::vector<std::string*>&, const uint_fast64_t );

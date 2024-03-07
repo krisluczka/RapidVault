@@ -937,6 +937,45 @@ namespace rv {
         } else check.push_error( ERROR_TYPE::NOT_ENOUGH_ARGUMENTS, "PUSH" );
     }
 
+    void database::APPEND_query( std::vector<std::string*>& tokens, const uint_fast64_t tokens_size ) {
+        if ( tokens_size > 1 ) {
+            // check if there are matching columns name, if so append them
+			uint_fast64_t index( get_table_index( *tokens[1] ) );
+			// deleting the "APPEND" and the table name
+			delete tokens[0];
+			delete tokens[1];
+			tokens.erase( tokens.begin() );
+			tokens.erase( tokens.begin() );
+			if ( index != NULL64_INDEX ) {
+				table* t( tables[index] );
+                if ( operation_table->data.size() > 0 && t->data.size() > 0 ) {
+                    uint_fast64_t column( 0 );
+                    uint_fast64_t rows( std::get<1>( t->data[0] )->size() );
+                    uint_fast64_t operation_rows( std::get<1>( operation_table->data[0] )->size() );
+                    
+                    // i will optimize it i swear
+                    for ( uint_fast64_t i(0); i < rows; ++i) {
+                        operation_table->create_row();
+					}
+
+				    for ( std::string* token : tokens ) {
+                        column = t->get_column_index( *token );
+					    if ( column != NULL64_INDEX ) {
+						
+                            // iterate through every cell of given colums
+						    for ( uint_fast64_t i( 0 ); i < rows; ++i ) {
+							    operation_table->change_cell( i, column, t->get_cell( i, column ) );
+						    }
+                            // boom, copy the values
+
+
+					    } else check.push_error( ERROR_TYPE::INVALID_COLUMN_NAME, "APPEND" );
+				    }
+                }
+			} else check.push_error( ERROR_TYPE::INVALID_TABLE_NAME, "APPEND" );
+        } else check.push_error( ERROR_TYPE::NOT_ENOUGH_ARGUMENTS, "APPEND" );
+    }
+
     // to rewrite later
     void database::INSERT_query( std::vector<std::string*>& tokens, const uint_fast64_t tokens_size ) {
         if ( tokens_size > 1 ) {
