@@ -26,8 +26,10 @@ int main() {
 	db.rvquery( "INSERT countries 0 \"Belgium\"" );
 	db.rvquery( "INSERT countries 1 \"Poland\"" );
 
-	db.rvquery( "SELECT users; WHERE \"example123\" \"^[A-Za-z]\\w+\" REGEX;" );
-	db.check.print_warnings();
+	db.rvquery( "SELECT users; APPEND cities name id country;" );
+	db.rvquery( "SELECT users; APPEND cities id country;" );
+	db.rvquery( "SELECT users; APPEND cities id country name;" );
+	db.rvquery( "SELECT users; APPEND cities id country name name;" );
 	db.display();
 
 	/*rv::database db;

@@ -325,6 +325,7 @@ namespace rv {
             else if ( *tokens[0] == "PICK" )        PICK_query( tokens, tokens_size );
             else if ( *tokens[0] == "WHERE" )       WHERE_query( tokens, tokens_size );
             else if ( *tokens[0] == "PUSH" )        PUSH_query( tokens, tokens_size );
+            else if ( *tokens[0] == "APPEND" )      APPEND_query( tokens, tokens_size );
             else if ( *tokens[0] == "INSERT" )      INSERT_query( tokens, tokens_size );
             else if ( *tokens[0] == "CREATE" )      CREATE_query( tokens, tokens_size );
             else if ( *tokens[0] == "DELETE" )      DELETE_query( tokens, tokens_size );
@@ -953,22 +954,21 @@ namespace rv {
                     uint_fast64_t rows( std::get<1>( t->data[0] )->size() );
                     uint_fast64_t operation_rows( std::get<1>( operation_table->data[0] )->size() );
                     
+                    // creating rows
                     // i will optimize it i swear
                     for ( uint_fast64_t i(0); i < rows; ++i) {
                         operation_table->create_row();
 					}
 
+                    uint_fast64_t operation_column( 0 );
 				    for ( std::string* token : tokens ) {
                         column = t->get_column_index( *token );
 					    if ( column != NULL64_INDEX ) {
-						
                             // iterate through every cell of given colums
-						    for ( uint_fast64_t i( 0 ); i < rows; ++i ) {
-							    operation_table->change_cell( i, column, t->get_cell( i, column ) );
+						    for ( uint_fast64_t i( operation_rows ); i < operation_rows + rows; ++i ) {
+							    operation_table->change_cell( i, operation_column, t->get_cell( i - operation_rows, column ));
 						    }
-                            // boom, copy the values
-
-
+                            ++operation_column;
 					    } else check.push_error( ERROR_TYPE::INVALID_COLUMN_NAME, "APPEND" );
 				    }
                 }
