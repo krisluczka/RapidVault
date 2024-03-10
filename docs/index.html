@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>RapidVault - pre-release 1.0</title>
+        <title>RapidVault - pre-release 1.1</title>
         <style>
             body {
                 margin: 0;
@@ -102,6 +102,7 @@
                 <a href="#RVquery"><div class="nav-button">RVquery</div></a>
                 <a href="#operating-queries"><div class="nav-button">Operating queries</div></a>
                 <a href="#manipulating-queries"><div class="nav-button">Manipulating queries</div></a>
+                <a href="#statement-queries"><div class="nav-button">Statement queries</div></a>
                 <a href="#expressions"><div class="nav-button">Expressions</div></a>
                 <a href="#errors-and-warnings"><div class="nav-button">Errors and warnings</div></a>
                 <a href="#development-plans"><div class="nav-button">Development plans</div></a>
@@ -127,7 +128,7 @@
                 </section>
                 <section id="database">
                     <h1>Database</h1>
-                    <p>RapidVault pre-release 1.0 operates on only one database, temporarily
+                    <p>RapidVault pre-release 1.1 operates on only one database, temporarily
                         named "rapidvault_database". Every database mathematically can hold up
                         to 2<sup>64</sup> tables, but there has been no tests nor benchmarks
                         to check the true maximum amount.
@@ -186,7 +187,7 @@ db.rvquery( query );</code></pre>
                     <p>For columns manipulating:</p>
 <pre><code>rv::table t( "my_own_table" );
 t.create_column( "other_table" );              // returns its index
-t.create_column( "another_table", 0 );         // inserts at given index and returns it
+t.create_column( "another_table", 0 );         // inserts at given index and returns index
 
 uint64_t column_index = t.get_column_index( "other_table" );
 t.rename_column( column_index, "new_name" );   // returns its index
@@ -289,9 +290,14 @@ t.delete_row( index1 );                   // returns new amount of rows</code></
                     future conflicts with this type of names.
                 </p>
                 <p>
+                    Any database cannot be named the same, as the others. The same thing goes with tables and their columns.
+                    RapidVault is forced to create columns or tables by appending a dash at the end, but won't allow
+                    a database's name to be forced.
                     To forbid overwriting, every join temporarily renames columns' by appending their table name
-                    followed by a dot. Currently, there is no method to prevent creating columns with the same names
-                    (and databases along with tables).
+                    followed by a dot.
+                </p>
+                <p>
+                    
                 </p>
                 </section>
                 <section id="RVquery">
@@ -299,7 +305,7 @@ t.delete_row( index1 );                   // returns new amount of rows</code></
                     <p>
                         One of the main ideas of the RapidVault was to abandon original SQL, along with other languages
                         like PRQL, GraphQL or WebAssembly e.t.c. RVquery is actually derived from the SQL, but it is
-                        processed a little differently. The project aims to moderately move away from the similarity to SQL,
+                        processed a little differently. The project aims to moderately move away from the similiarities,
                         but for now the keywords are almost identical.
                     </p>
                     <p>
@@ -349,7 +355,7 @@ JOIN any_table_name.id_column LEFT id another_table;</code></pre>
 <pre><code>SELECT table;</code></pre>
                     <p>It will return an error if the specified table doesn't exist or there were no arguments provided.</p>
                     <h2>JOIN</h2>
-                    <p>For now, there are two types of joins.</p>
+                    <p>There are seven types of joins.</p>
                     <img src="operating_queries_join.png"/>
                     <p>The full instruction scheme looks like this</p>
 <pre><code>JOIN main_table_name.key_column RELATION key_column other_table;</code></pre>
@@ -359,27 +365,38 @@ JOIN any_table_name.id_column LEFT id another_table;</code></pre>
                     <ul>
                         <li>
                             <code>LEFT</code> - all records from the left (operating) table and the matched
-                            records from the right (specified) based on provided key columns.
+                            records from the right (specified), based on provided key columns.
                         </li>
                         <li>
                             <code>RIGHT</code> - all records from the right (specified) table and the matched
-                            records from the left (operating) based on provided key columns.
+                            records from the left (operating), based on provided key columns.
+                        </li>
+                        <li>
+                            <code>INTERSECT</code> - combined records with matching values in both tables.
+                        </li>
+                        <li>
+                            <code>UNION</code> - combined records from both tables tables, based on provided key columns.
+                        </li>
+                        <li>
+                            <code>LEFT_DIFF</code> - all records from the left (operating) table without the matched
+                            records from the right (specified), based on provided key columns.
+                        </li>
+                        <li>
+                            <code>RIGHT_DIFF</code> - all records from the right (specified) table without the matched
+                            records from the left (operating), based on provided key columns.
+                        </li>
+                        <li>
+                            <code>SYM_DIFF</code> - combined records from both tables tables without rows with matched
+                            values, based on provided key columns.
                         </li>
                     </ul>
                     <p>
-                        Let's say that we have <code>users</code> and <code>cities</code> tables.
-                        First one has <code>city</code> column, and the second has <code>id</code> column,
+                        Let's say that we have tables <code>users</code> and <code>cities</code>.
+                        First one has <code>city</code> column, and the second one has <code>id</code> column,
                         thus they will be used as our key columns.
+                        Table <code>cities</code> has a <code>country</code> column and with <code>id</code> column from
+                        <code>countries</code> can form a key.
                     </p>
-<pre><code>SELECT users;
-JOIN users.city LEFT id cities;</code></pre>
-                    <p>
-                        Table <code>cities</code> has a <code>country</code> column. We can append the
-                        <code>countries</code> table (by <code>id</code> column) to the recently processed operating
-                        table using
-                    </p>
-<pre><code>JOIN cities.country LEFT id countries;</code></pre>
-                    <p>For these tables</p>
 <pre><code>
     o------------o---------------o------------o    o-----------o-------------o----------------o    o--------------o----------------o
     | users.name | users.surname | users.city |    | cities.id | cities.name | cities.country |    | countries.id | countries.name |
@@ -393,7 +410,9 @@ JOIN users.city LEFT id cities;</code></pre>
     | Jack       | Sparrow       | 3          |
     +------------+---------------+------------+
 </code></pre>
-                    <p>the result should look like this</p>
+                    <p>We can join these tables using</p>
+<pre><code>SELECT users; JOIN users.city LEFT id cities; JOIN cities.country LEFT id countries;</code></pre>
+                    <p>The result will be</p>
 <pre><code>
     o------------o---------------o-------------o----------------o
     | users.name | users.surname | cities.name | countries.name |
@@ -409,6 +428,7 @@ JOIN users.city LEFT id cities;</code></pre>
 </code></pre>
                     <p>Let's analize these</p>
                     <ol>
+                        <li>Note, that there are no key columns - query automatically omits them.</li>
                         <li>The first join merges <code>users</code> with <code>cities</code>.</li>
                         <li>There is no city defined for Sparrow, thus the zero is inserted.</li>
                         <li>The second join merges <code>cities</code> with <code>countries</code>.</li>
@@ -417,12 +437,23 @@ JOIN users.city LEFT id cities;</code></pre>
                             Because of the Sparrow's zero inserted in <code>cities.name</code>, there
                             is "Belgium" inserted (its index is also equal to 0).
                         </li>
-                        <li>Note, that there are no key columns - query automatically omits them.</li>
                     </ol>
                     <p>
-                        There is no prevention for this behaviour in pre-release 1.0, so the users
-                        are advised to carefully design their databases.
+                        To prevent behaviour described in point 6, use <code>INTERSECT</code>.
                     </p>
+<pre><code>
+    SELECT users; JOIN users.city INTERSECT id cities;                      SELECT users; JOIN users.city INTERSECT id cities;
+    JOIN cities.country LEFT id countries;                                  JOIN cities.country INTERSECT id countries;
+    o------------o---------------o-------------o----------------o           o------------o---------------o-------------o----------------o
+    | users.name | users.surname | cities.name | countries.name |           | users.name | users.surname | cities.name | countries.name |
+    +------------+---------------+-------------+----------------+           +------------+---------------+-------------+----------------+  
+    | Krzysztof  | Luczka        | Poznan      | Poland         |           | Krzysztof  | Luczka        | Poznan      | Poland         |
+    +------------+---------------+-------------+----------------+           +------------+---------------+-------------+----------------+
+    | Herkules   | Poirot        | Spa         | Belgium        |           | Herkules   | Poirot        | Spa         | Belgium        |
+    +------------+---------------+-------------+----------------+           +------------+---------------+-------------+----------------+
+    | Tony       | Stark         | New York    | 0              |
+    +------------+---------------+-------------+----------------+
+</code></pre>
                     <p>
                         This instruction will return an error when the starting table wasn't established,
                         the columns' or tables' names are invalid, there were not enough arguments or
@@ -460,15 +491,51 @@ JOIN users.city LEFT id cities;</code></pre>
                         a type mixup (comparing string to number e.t.c.) or division by zero.
                     </p>
                     <h2>PUSH</h2>
+                    <h3>PUSH ROW</h3>
                     <p>Sometimes there is a need to insert a new row just for the operation table. To do so, use</p>
-<pre><code>PUSH value1 value2 value3 ...;</code></pre>
+<pre><code>PUSH ROW value1 value2 value3 ...;</code></pre>
                     <p>
                         It creates a new row in the operation table, and whenever there are
                         given less values than columns, it will set them to zero.
+                    </p>
+                    <h3>PUSH COLUMNS</h3>
+                    <p>The same goes with columns.</p>
+<pre><code>PUSH COLUMNS column_name1 column_name2 column_name3 ...;</code></pre>
+                    <p>
                         This instruction takes any amount of arguments, and returns an error
                         when given no arguments.
                     </p>
-                    <p></p>
+                    <h2>APPEND</h2>
+                    <p>To vertically merge any table with an operation table, use</p>
+<pre><code>APPEND table_name column_name1 column_name2 column_name3 ...;</code></pre>
+                    <p>
+                        This instruction will combine two tables by appending the specified one to the operation table.
+                        After table name, specify the appending order by specifying which columns from given table should be added.
+                        This example is based on the previously discussed tables:
+                    </p>
+<pre><code>SELECT users; APPEND cities name id country;
+    o------------o---------------o------------o
+    | users.name | users.surname | users.city |
+    +------------+---------------+------------+
+    | Krzysztof  | Luczka        | 0          |
+    +------------+---------------+------------+
+    | Herkules   | Poirot        | 2          |
+    +------------+---------------+------------+ 
+    | Tony       | Stark         | 1          |
+    +------------+---------------+------------+
+    | Jack       | Sparrow       | 3          |
+    +------------+---------------+------------+
+    | Poznan     | 0             | 1          |
+    +------------+---------------+------------+
+    | New York   | 1             | 3          |
+    +------------+---------------+------------+
+    | Spa        | 2             | 0          |
+    +------------+---------------+------------+
+</code></pre>
+                <p>
+                    If there will be less columns than the operation table's, the non-specified columns will be filled by zeroes.
+                    Instruction will return an error when given invalid amount of arguments, invalid table or column name.
+                </p>
                 </section>
                 <section id="manipulating-queries">
                     <h1>Manipulating queries</h1>
@@ -497,6 +564,31 @@ JOIN users.city LEFT id cities;</code></pre>
                         is invalid, there were not enough arguments or there was an unexpected
                         instruction call (invalid instance type).
                     </p>
+                    <h2>DELETE</h2>
+                    <h3>DELETE TABLE</h3>
+                    <p>To delete table, type</p>
+<pre><code>DELETE TABLE table_name;</code></pre>
+                    <h3>DELETE COLUMNS</h3>
+                    <p>To delete columns from given table, type</p>
+<pre><code>DELETE COLUMNS table_name column_name1 column_name2 column_name3 ...;</code></pre>
+                    <p>
+                        Note that in both cases no message confirming the deletion will appear,
+                        and it is irreversible.
+                        Will return an error when given invalid instruction, invalid table or column name or
+                        when not enough arguments provided.
+                    </p>
+                    <h2>SAVE</h2>
+                    <p>There is no idea of subquery, instead you can preserve the query results as a new table by using</p>
+<pre><code>SAVE table_name;</code></pre>
+                    <p>
+                        This code will create a table with the given name and insert the contents of the operations table.
+                        Note, that it will overwrite when provided existing table.
+                        Will return an error when given invalid instruction or not enough arguments.
+                    </p>
+                </section>
+                <section id="statement-queries">
+                    <h1>Statement queries</h1>
+                    <h2>DISTINCT</h2>
                 </section>
                 <section id="expressions">
                     <h1>Expressions</h1>
@@ -551,13 +643,14 @@ JOIN users.city LEFT id cities;</code></pre>
                         are strings. Mathematical operators do not go with strings, thus, RapidVault defines behaviours to
                         handle these possibilities:
                         <ul>
-                            <li>string &lt=&gt number
+                            <li>string to number and vice versa
                                 <ul>
                                     <li><code>+</code> operator will treat any number like a string and will concatenate it to the second operand</li>
                                     <li>any other operator will replace string with its length</li>
+                                    <li><code>REGEX</code> will convert any number to a string</li>
                                 </ul>
                             </li>
-                            <li>string &lt=&gt string
+                            <li>string to string and vice versa
                                 <ul>
                                     <li><code>+</code> will concatenate strings</li>
                                     <li><code>==</code> and <code>!=</code> will compare true strings' values</li>
@@ -566,11 +659,60 @@ JOIN users.city LEFT id cities;</code></pre>
                             </li>
                         </ul>
                     </p>
+                    <h2>Regular expressions</h2>
+                    <p>
+                        Regular expressions, called <i>REGEX</i> for shortcut - are a method to search for strings based on a template.
+                        Any character is a scheme <i>per se</i>, but there are some additional rules to follow:
+                    </p>
+                    <ul>
+                        <li><code>.</code> - the dot matches any single character except for a newline</li>
+                        <li><code>*</code> - the asterisk matches the preceding element zero or more times</li>
+                        <li><code>+</code> - the plus matches the preceding element one or more times</li>
+                        <li><code>?</code> - the question mark matches the preceding element zero or one time</li>
+                        <li><code>^</code> - the caret matches the start of the string</li>
+                        <li><code>$</code> - the dollar sign matches the end of the string</li>
+                        <li><code>[ ]</code> - square brackets match any one of the characters within the brackets</li>
+                        <li><code>[^ ]</code> - caret inside square brackets match any character not included inside them</li>
+                        <li><code>( )</code> - parentheses group the enclosed pattern elements</li>
+                        <li><code>{ n }</code> - matches <i>n</i> repetitions of the previous character or expression</li>
+                        <li><code>{ n,m }</code> - matches <i>n</i> to <i>m</i> repetitions of the previous character or expression</li>
+                        <li><code>{ ,m }</code> - matches up to <i>m</i> repetitions of the previous character or expression</li>
+                        <li><code>{ n, }</code> - matches at least <i>n</i> repetitions of the previous character or expression</li>
+                        <li><code>\d</code> - matches a digit character</li>
+                        <li><code>\D</code> - matches a non-digit character</li>
+                        <li><code>\s</code> - matches any whitespace character</li>
+                        <li><code>\S</code> - matches any non-whitespace character</li>
+                        <li><code>\w</code> - matches any alphabetical or digit character, including underscores</li>
+                        <li><code>\b</code> - ensures, that anything in between these characters is a single word, not a part of a longer string</li>
+                        <li><code>\</code> - used for special characters that are already used for rules, for example <code>\.</code> would be used as a regular dot in a pattern (<code>\</code> is omitted in square brackets).</li>
+                        <li><code>|</code> - vertical bar acts as an OR operator, allowing the matching of either the pattern on the left or the pattern on the right</li>
+                    </ul>
+                    <p>Theoretical examples:</p>
+                    <ul>
+                        <li><code>\d{3}-\d{2}-\d{4}</code> - any number that looks like this 'xxx-xx-xxxx', for example '123-90-7428'</li>
+                        <li><code>^[A-Za-z]\w+</code> - word that starts with any letter and is followed by any alphabetical or digit character, for example 'e4_example'</li>
+                        <li><code>\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b</code> - any email validator</li>
+                    </ul>
+                    <p>Practical examples:</p>
+                    <ul>
+                        <li>This query will search every user, whose surname ends with <i>ski</i>
+<pre><code>SELECT users; WHERE users.surname "\b[A-Za-z]+ski\b" REGEX;</code></pre></li>
+                        <li>This will display all the phone numbers from Poland (for example <i>+48 123 456 789</i> or <i>+48123456789</i>)
+<pre><code>SELECT user_data; WHERE user_data.phone "(\+48 \d{3} \d{3} \d{3})|(\+48\d{9})" REGEX;</code></pre></li>
+                        <li>If you do not care about the spaces, use
+<pre><code>SELECT user_data; WHERE user_data.phone "\+48(\s*\d){9}" REGEX;</code></pre>
+                            This will match both <i>+48 12 34 567 &nbsp&nbsp 89</i> or <i>+48 1 2 3 4 5 6 7 8 9</i> e.t.c.</li>
+                    </ul>
                     <h2>Limitations</h2>
                     <p>
-                        Currently, RVquery supports <code>+</code>, <code>-</code>, <code>*</code>, <code>/</code>, <code>%</code>,
-                        <code>+</code>, <code>+</code>, <code>&lt</code>, <code>&lt=</code>, <code>&gt</code>, <code>&gt=</code>,
-                        <code>==</code> and <code>!=</code> operators.
+                        Currently, RVquery supports:
+                        <ul>
+                            <li>math operators like <code>+</code>, <code>-</code>, <code>*</code>, <code>/</code> and <code>%</code></li>
+                            <li>boolean operators like <code>&&</code> and <code>||</code></li>
+                            <li>comparing operators like <code>&lt</code>, <code>&lt=</code>, <code>&gt</code>, <code>&gt=</code>, <code>==</code> and <code>!=</code></li>
+                            <li>bitwise operators like <code>&lt&lt</code>, <code>&gt&gt</code>, <code>|</code>, <code>&</code> and <code>^</code></li>
+                            <li>REGEX</li>
+                        </ul>
                     </p>
                 </section>
                 <section id="errors-and-warnings">
@@ -589,7 +731,7 @@ db.check.print_errors();</code></pre>
                     </p>
 <pre><code>db.check.print_warnings();</code></pre>
                     <h2>Errors</h2>
-                    Currently there are 6 different types of errors:
+                    There are 6 different types of errors:
                     <ul>
                         <li>
                             <code>rv::ERROR_TYPE::INVALID_EXPRESSION_FORMAT</code>
@@ -643,7 +785,7 @@ db.check.print_errors();</code></pre>
                         </li>
                     </ul>
                     <h2>Warnings</h2>
-                    Currently there are 2 different types of warnings:
+                    There are 4 different types of warnings:
                     <ul>
                         <li>
                             <code>rv::WARNING_TYPE::DIVISION_BY_ZERO</code>
@@ -659,36 +801,50 @@ db.check.print_errors();</code></pre>
                                 <li>doing math operators on strings</li>
                             </ul>
                         </li>
+                        <li>
+                            <code>rv::WARNING_TYPE::FORCED_NAME</code>
+                            <ul>
+                                <li>a table or a column with the same name was created</li>
+                                <li>
+                                    functions <code>create_column()</code> and <code>create_table()</code> will return a
+                                    <code>NULL64_INDEX = 2<sup>64</sup> - 1</code>
+                                </li>
+                            </ul>
+                        </li>
+                        <li>
+                            <code>rv::WARNING_TYPE::INVALID_REGEX</code>
+                            <ul>
+                                <li>an invalid string is used as a regular expression</li>
+                                <li>will use the <code>.*</code></li>
+                            </ul>
+                        </li>
                     </ul>
                 </section>
                 <section id="development-plans">
                     <h1>Development plans</h1>
-                    The list of features that are planned to be implemented until next release:
+                    The list of features that are planned to be implemented until the full release of RapidVault 1:
                     <ul>
-                        <li><code>DELETE</code> and <code>UPDATE</code> manipulating queries</li>
+                        <li><code>DELETE ROW</code> and <code>UPDATE</code> manipulating queries</li>
                         <li>
                             <code>DISTINCT</code>, <code>ASCENDING</code>, <code>DESCENDING</code>,
                             <code>SUM</code>, <code>AVG</code>, <code>MIN</code> and
                             <code>MAX</code> queries
                         </li>
-                        <li>
-                            <code>LEFT_DIFF</code>, <code>SYM_DIFF</code>, <code>RIGHT_DIFF</code>,
-                            <code>INTERSECTION</code> and <code>UNION</code> relationship types
-                        </li>
-                        <img src="development_plans_joins.png"/>
-                        <li><code>PUSH ROW</code> and <code>PUSH COLUMNS</code> distinction</li>
-                        <li>Regular expressions for <code>WHERE</code> instruction</li>
-                        <li>Bitshift operators (<code>&lt&lt</code> and <code>&gt&gt</code>) support</li>
-                        <li><code>%</code> operator for floating point numbers</li>
-                        <li>Implement database saving (including autosave) and loading</li>
+                        <li>Implement full database management</li>
+                        <li>Implement database autosave</li>
+                        <li>Loading databases from JSON files to RapidVault</li>
+                    </ul>
+                    The list of features to be implemented until the full release of RapidVault 2:
+                    <ul>
                         <li>Migrating from SQL databases to RapidVault</li>
                         <li>Raports</li>
+                        <li>Column indexes</li>
                     </ul>
                 </section>
                 <section id="contributors">
                     <h1>Contributors</h1>
-                    This project has no other contributors yet. This documentation is current
-                    until March 1, 2024 and describes the RapidVault pre-release 1.0 version.
+                    <p>This project has no other contributors yet. This documentation is current
+                    until March 31, 2024 and describes the RapidVault pre-release 1.1 version.</p>
 <pre>
     MIT License
 
